@@ -32,7 +32,7 @@ public class MailMessageParser
   {
     MailMessageParser parser = new MailMessageParser();
 
-    List result = new LinkedList();
+    List<MailMessageData> result = new LinkedList<MailMessageData>();
     NodeList mailListNodes = mailListNode.getChildNodes();
     for (int j = 0; j < mailListNodes.getLength(); j++)
     {
@@ -58,7 +58,7 @@ public class MailMessageParser
       }
     }
 
-    return (MailMessageData[])result.toArray(new MailMessageData[result.size()]);
+    return result.toArray(new MailMessageData[result.size()]);
   }
 
   /**
@@ -196,8 +196,8 @@ public class MailMessageParser
   private static class HtmlPartParser
   {
     URI m_baseHref;
-    Map m_resources = new HashMap();
-    Map m_resourceContent = new HashMap();
+    Map<String,String> m_resources = new HashMap<String,String>();
+    Map<String,MailPartSource> m_resourceContent = new HashMap<String,MailPartSource>();
 
     private void digest(NodeList bodyNodes, MailMessageData msg)
       throws IOException
@@ -217,16 +217,14 @@ public class MailMessageParser
       // Attach the dereferenced resources to be included as "related" MIME parts in the
       // final result:
       LOG.debug("HTML BODY: " + bodyText.length() + " characters");
-      Iterator urls = m_resources.entrySet().iterator();
-      while (urls.hasNext())
+      for (Map.Entry<String,String> e : m_resources.entrySet())
       {
-        Map.Entry e = (Map.Entry)urls.next();
-        String ref = (String)e.getKey();
-        String partId = (String)e.getValue();
+        String ref = e.getKey();
+        String partId = e.getValue();
 
         if (ref.startsWith("mem:/"))
         {
-          MailPartSource binaryContent = (MailPartSource)m_resourceContent.get(ref);
+          MailPartSource binaryContent = m_resourceContent.get(ref);
           msg.addRelatedBodyPart(partId, binaryContent);
         }
         else if (ref.startsWith("file:/"))

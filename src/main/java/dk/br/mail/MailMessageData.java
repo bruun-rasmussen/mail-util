@@ -1,7 +1,5 @@
 package dk.br.mail;
 
-import dk.br.mail.MailMessageSource;
-import dk.br.mail.MailPartSource;
 import java.io.*;
 import java.util.*;
 import javax.activation.DataHandler;
@@ -11,12 +9,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A serializable, transportable representation of an e-mail message. The <em>transportable</em> part means that
- * instances will never include references to "local" files or directories.
+ * A serializable, transportable representation of an e-mail message. The <em>transportable</em> 
+ * part means that instances will never include references to "local" files or directories.
  *
  * @author     TietoEnator Consulting
  * @since      21. november 2003
- * @version    $Id$
  */
 public final class MailMessageData
      implements java.io.Serializable, MailMessageSource
@@ -30,19 +27,20 @@ public final class MailMessageData
 
   private Address m_sender;
   private Address m_bounceTo;
-  private final List m_from = new LinkedList();
-  private final List m_replyTo = new LinkedList();
-  private final List m_recipientsTo = new LinkedList();
-  private final List m_recipientsCc = new LinkedList();
-  private final List m_recipientsBcc = new LinkedList();
+  private final List<Address> m_from = new LinkedList<Address>();
+  private final List<Address> m_replyTo = new LinkedList<Address>();
+  private final List<Address> m_recipientsTo = new LinkedList<Address>();
+  private final List<Address> m_recipientsCc = new LinkedList<Address>();
+  private final List<Address> m_recipientsBcc = new LinkedList<Address>();
   private Date m_sentDate = new Date();
   private String m_subject = "(no subject)";
   private String m_plainText;
   private String m_htmlText;
-  private final Map m_relatedBodyParts = new HashMap();
-  private final Map m_customHeaders = new HashMap();
-  private final List m_attachments = new LinkedList();
+  private final Map<String,MailPartSource> m_relatedBodyParts = new HashMap<String,MailPartSource>();
+  private final Map<String,String> m_customHeaders = new HashMap<String,String>();
+  private final List<MailPartSource> m_attachments = new LinkedList<MailPartSource>();
 
+  @Override
   public void setCustomHeader(String name, String value)
   {
     m_customHeaders.put(name, value);
@@ -94,6 +92,7 @@ public final class MailMessageData
     m_bounceTo = address;
   }
 
+  @Override
   public Address getBounceAddress()
   {
     return m_bounceTo;
@@ -160,9 +159,9 @@ public final class MailMessageData
     m_recipientsBcc.addAll(Arrays.asList(addresses));
   }
 
-  private static Address[] toAddressArray(List addresses)
+  private static Address[] toAddressArray(List<Address> addresses)
   {
-    return (Address[])addresses.toArray(new Address[addresses.size()]);
+    return addresses.toArray(new Address[addresses.size()]);
   }
 
   public void attach(MailPartSource attachment)
@@ -177,6 +176,7 @@ public final class MailMessageData
    *                    images referenced in HTML &lt;img href="http://...."&gt; 
    *                    if not set, this will cause 
    */
+  @Override
   public MimeMessage compose(Session session, boolean failsafe)
     throws MessagingException
   {
@@ -214,12 +214,8 @@ public final class MailMessageData
       if (m_subject != null)
         message.setSubject(m_subject, "UTF-8");
 
-      Iterator headers = m_customHeaders.entrySet().iterator();
-      while (headers.hasNext())
-      {
-        Map.Entry e = (Map.Entry)headers.next();
-        message.addHeader((String)e.getKey(), (String)e.getValue());
-      }
+      for (Map.Entry<String, String> e : m_customHeaders.entrySet())
+        message.addHeader(e.getKey(), e.getValue());
 
       composeMessageTo(message);
 
@@ -248,10 +244,8 @@ public final class MailMessageData
         mixedPart.addBodyPart(bodyPart);
 
         // ... and add attachment(s) to it:
-        Iterator i = m_attachments.iterator();
-        while (i.hasNext())
+        for (MailPartSource data : m_attachments)
         {
-          MailPartSource data = (MailPartSource)i.next();
           BodyPart attachment = composeAttachment(data);
           mixedPart.addBodyPart(attachment);
         }
@@ -393,6 +387,7 @@ public final class MailMessageData
   }
 
 
+  @Override
   public Address getFirstRecipient()
   {
     return !m_recipientsTo.isEmpty() ? (Address)m_recipientsTo.get(0) :
@@ -400,6 +395,7 @@ public final class MailMessageData
             !m_recipientsBcc.isEmpty() ? (Address)m_recipientsBcc.get(0) : null;
   }
 
+  @Override
   public String toString()
   {
     return "[" + getFirstRecipient() + ": \"" + m_subject + "\"]";
