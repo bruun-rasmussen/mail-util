@@ -1,0 +1,231 @@
+package dk.br.mail;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.Arrays;
+import java.util.regex.Pattern;
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.mail.MessagingException;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * @author      osa
+ * @version     $Id$
+ */
+public abstract class MailPartSource
+{
+  private final static Logger LOG = LoggerFactory.getLogger(MailPartSource.class);
+  
+  protected abstract DataSource _source() throws MessagingException;
+
+  public DataHandler getDataHandler() throws MessagingException {
+    DataSource ds = _source();
+    return new DataHandler(ds);
+  }
+  
+  public static MailPartSource from(URL url) {
+    return new RemoteHtmlResource(url);
+  }
+
+  public static BinaryData from(String contentType, String contentEncoding, String name, byte content[]) {
+    return new BinaryData(contentType, contentEncoding, name, content);
+  }
+
+  private static BinaryData _read(URL url)
+    throws IOException
+  {
+    long t1 = System.currentTimeMillis();
+    LOG.debug("fetching " + url);
+    URLConnection conn = url.openConnection();
+    conn.connect();
+    String contentType = conn.getContentType();
+    String contentEncoding = conn.getContentEncoding();
+
+    String name = url.getFile();
+
+    // Strip ..my-file.pdf?p1=query&p2=etc... query suffix
+    int qpos = name.indexOf('?');
+    if (qpos > 0)
+      name = name.substring(0, qpos);
+
+    // Strip .../some/path/my-file.pdf path prefix
+    int spos = name.lastIndexOf('/');
+    if (spos >= 0) 
+      name = name.substring(spos + 1);
+
+    InputStream is = conn.getInputStream();
+    try
+    {
+      byte content[] = _readStream(is);
+      long t2 = System.currentTimeMillis();
+      LOG.debug(name + ": fetched " + content.length + " bytes of " + (contentEncoding == null ? "" : "[" + contentEncoding + "]-encoded ") + contentType + " (" + (t2-t1) + "ms)");
+      return new BinaryData(contentType, contentEncoding, name, content);
+    }
+    finally
+    {
+      is.close();
+    }
+  }
+
+  private static byte[] _readStream(InputStream in)
+    throws IOException
+  {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    byte buf[] = new byte[8192];
+    int n;
+    while ((n = in.read(buf)) > 0)
+      out.write(buf, 0, n);
+    return out.toByteArray();
+  }
+  
+  /*
+   *  A lazy container for a URL data handler. URL is serializable, DataHander is not.
+   */
+  private static class RemoteHtmlResource extends MailPartSource implements java.io.Serializable
+  {
+    final static long serialVersionUID = 8129104633675817198L;
+
+    private final URL m_urlSpec;
+
+    public RemoteHtmlResource(URL url) {
+      m_urlSpec = url;
+    }
+
+    public DataSource _source() throws MessagingException {         
+      // return new URLDataSource(m_urlSpec);
+      String tsUrl = m_urlSpec.toString().replaceAll(Pattern.quote("$TS$"), Long.toString(System.currentTimeMillis()));
+      try
+      {
+        URL url = new URL(tsUrl);
+        try {
+          BinaryData data = _read(url);
+          LOG.debug("attaching " + data);
+          return data._source();
+        }
+        catch (IOException ex)
+        {
+          throw new MessagingException(ex.getMessage());
+        }
+      }
+      catch (MalformedURLException ex)
+      {
+        throw new RuntimeException(ex);
+      }
+    }
+
+    public String toString() {
+      return "[content from " + m_urlSpec + "]";
+    }
+  }
+
+  /*
+   *  Utility class that is used to attach a PDF file object to an email.
+   */
+  public static class BinaryData extends MailPartSource implements java.io.Serializable
+  {
+    final static long serialVersionUID = -7813275734783155287L;
+
+    private final String m_contentType;
+    private final String m_contentEncoding;
+    private final String m_name;
+    private final byte m_content[];
+
+    public BinaryData(String contentType, String contentEncoding, String name, byte content[])
+    {
+      m_contentType = contentType;
+      m_contentEncoding = contentEncoding;
+      m_name = name;
+      m_content = content;
+    }
+
+    public byte[] getContentBytes()
+    {
+      return m_content;
+    }
+
+    public boolean equals(Object o)
+    {
+      if (o == this)
+        return true;
+      if (o == null)
+        return false;
+      if (!(o instanceof BinaryData))
+        return false;
+      BinaryData that = (BinaryData)o;
+      return
+             StringUtils.equals(this.m_name, that.m_name)
+          && StringUtils.equals(this.m_contentType, that.m_contentType)
+          && StringUtils.equals(this.m_contentEncoding, that.m_contentEncoding)
+          && Arrays.equals(this.m_content, that.m_content);
+    }
+
+    private Integer _hash;
+
+    public int hashCode()
+    {
+      if (_hash == null)
+      {
+        // Where is java.util.Arrays.hashCode(Object myArray)?
+        int h = m_name.hashCode() * 37 + m_contentType.hashCode();
+        for (int i = 0; i < m_content.length; i++)
+          h = h * 37 + m_content[i];
+        _hash = h;
+      }
+      return _hash;
+    }
+
+    public String toString()
+    {
+      return "[" + m_name + ": " + m_content.length + " bytes of " + (m_contentEncoding == null ? "" : m_contentEncoding + "-encoded ") + m_contentType + "]";
+    }
+
+    public String getContentEncoding()
+    {
+      return m_contentEncoding;
+    }
+
+    public String getContentType()
+    {
+      return m_contentType;
+    }
+
+    public String getName()
+    {
+      return StringUtils.isEmpty(m_name) ? "unknown" : m_name;
+    }
+    
+    public DataSource _source()
+    {
+      return new DataSource() {
+        public InputStream getInputStream() throws IOException
+        {
+          return new ByteArrayInputStream(m_content);
+        }
+
+        public OutputStream getOutputStream() throws IOException
+        {
+          throw new IOException(getName() + ": no output stream associated");
+        }
+
+        public String getContentType()
+        {
+          return BinaryData.this.getContentType();
+        }
+
+        public String getName()
+        {
+          return BinaryData.this.getName();
+        }
+      };
+    }
+  }
+}
