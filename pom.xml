@@ -39,6 +39,12 @@
     </dependency>
 
     <dependency>
+      <groupId>dk.br</groupId>
+      <artifactId>zurb-email</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>3.8.1</version>
@@ -50,6 +56,12 @@
       <artifactId>geronimo-j2ee_1.4_spec</artifactId>
       <version>1.1</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+      <version>1.10.3</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
