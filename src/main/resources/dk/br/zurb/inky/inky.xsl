@@ -2,7 +2,7 @@
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
-  <xsl:param name="foundation-css" select="'body { width: 100% !important; min-width: 100%; margin: 0; Margin: 0; padding: 0; box-sizing: border-box; }'" />
+  <xsl:param name="inky-css" select="'body { width: 100% !important; min-width: 100%; margin: 0; Margin: 0; padding: 0; box-sizing: border-box; }'" />
   <xsl:param name="column-count" select="12" />
   
   <xsl:template match="@*|node()">

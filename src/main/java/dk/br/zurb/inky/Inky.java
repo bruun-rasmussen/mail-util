@@ -25,7 +25,7 @@ public class Inky
 {
   private final static SAXTransformerFactory stf = (SAXTransformerFactory)TransformerFactory.newInstance(); 
   
-  private String appCss;
+  private String inkyCss;
   private Templates inky1;
   private Templates inky2;
 
@@ -36,7 +36,7 @@ public class Inky
   private void init() {
     inky1 = _loadXsl(getClass().getResource("inky.xsl"));
     inky2 = _loadXsl(getClass().getResource("inky-center.xsl"));
-    appCss = _loadText(getClass().getClassLoader().getResource("dk/br/zurb/mail/css/app.css"), Charset.defaultCharset());
+    inkyCss = _loadText(getClass().getClassLoader().getResource("dk/br/zurb/mail/css/app.css"), Charset.defaultCharset());
   }
   
   private Templates _loadXsl(URL res) {
@@ -74,7 +74,8 @@ public class Inky
   public void transform(Source src, Result res) 
           throws TransformerException {
     Transformer xf1 = inky1.newTransformer();
-    xf1.setParameter("foundation-css", appCss);
+    xf1.setParameter("inky-css", inkyCss);
+    xf1.setParameter("column-count", 12);
 
     DOMResult r1 = new DOMResult();
     xf1.transform(src, r1);

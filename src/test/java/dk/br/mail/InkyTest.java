@@ -22,40 +22,40 @@ import org.xml.sax.SAXException;
 public class InkyTest extends TestCase
 {
   private Inky inky;
-  
+
   public InkyTest(String testName)
   {
     super(testName);
   }
-  
+
   @Override
   protected void setUp() throws Exception
   {
     inky = new Inky();
-        
+
     super.setUp();
   }
-  
+
   @Override
   protected void tearDown() throws Exception
   {
     super.tearDown();
   }
-  
+
   public void testOurOwn() throws IOException, TransformerException, SAXException {
     checkTemplate("br_order-ex.html");
     checkTemplate("br_vores-vurdering.html");
     checkTemplate("br_newsletter.html");
   }
-  
+
   public void __testThis() throws IOException, TransformerException, SAXException {
     checkTemplate("drip.html");
     checkTemplate("hero.html");
     checkTemplate("sidebar.html");
     checkTemplate("sidebar-hero.html");
   }
-  
-  private void checkTemplate(String src) throws IOException, TransformerException, SAXException {    
+
+  private void checkTemplate(String src) throws IOException, TransformerException, SAXException {
     URL srcUrl = getClass().getClassLoader().getResource("dk/br/zurb/mail/source/pages/" + src);
     URLConnection urlConn = srcUrl.openConnection();
     InputStream is = urlConn.getInputStream();
@@ -64,6 +64,6 @@ public class InkyTest extends TestCase
     W3CDom w3cDom = new W3CDom();
     Document doc = w3cDom.fromJsoup(soupDoc);
 
-    inky.transform(new DOMSource(doc), new StreamResult(new File(src)));    
+    inky.transform(new DOMSource(doc), new StreamResult(new File(src)));
   }
 }
