@@ -2,14 +2,10 @@
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
-  <xsl:template match="@*|node()">
+  <xsl:template match="@*|node()|center">
     <xsl:copy>
-      <xsl:apply-templates select="@*|node()"/>
+      <xsl:apply-templates select="@*|node()" />
     </xsl:copy>
-  </xsl:template>
-
-  <xsl:template match="center">
-    <xsl:apply-templates select="@*|node()"/>
   </xsl:template>
 
   <xsl:template match="*">
@@ -23,11 +19,10 @@
             </xsl:if>
             <xsl:value-of select="'float-center'" />
           </xsl:attribute>
-          <xsl:apply-templates select="@*[name() != 'class']"/>
-          <xsl:apply-templates />
+          <xsl:apply-templates select="@*[name() != 'class']|node()" />
         </xsl:when>
         <xsl:otherwise>
-          <xsl:apply-templates select="@*|node()"/>
+          <xsl:apply-templates select="@*|node()" />
         </xsl:otherwise>
       </xsl:choose>
     </xsl:copy>

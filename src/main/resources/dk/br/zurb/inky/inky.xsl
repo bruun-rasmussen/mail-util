@@ -11,11 +11,13 @@
     </xsl:copy>
   </xsl:template>
 
-  <xsl:template match="html/head">
+  <xsl:template match="html[body//row|body//columns|body//container|body//wrapper]/head">
     <xsl:copy>
       <xsl:apply-templates />
       <style type="text/css">
-        <xsl:value-of select="$foundation-css" />
+        <xsl:comment>
+          <xsl:value-of select="$inky-css" />
+        </xsl:comment>
       </style>
     </xsl:copy>    
   </xsl:template>
@@ -331,7 +333,7 @@
           <xsl:value-of select="concat(' ', @class)" />
         </xsl:if>
         <xsl:if test="ancestor::center">
-          <xsl:value-of select="concat(' float-center')" />
+          <xsl:value-of select="' float-center'" />
         </xsl:if>
       </xsl:attribute>
       <xsl:apply-templates select="@*[name() != 'class' and name() != 'target' and name() != 'href']"/>

@@ -28,6 +28,7 @@ public class Inky
   private String inkyCss;
   private Templates inky1;
   private Templates inky2;
+  private String htmlEncoding;
 
   public Inky() {
     init();
@@ -37,7 +38,20 @@ public class Inky
     inky1 = _loadXsl(getClass().getResource("inky.xsl"));
     inky2 = _loadXsl(getClass().getResource("inky-center.xsl"));
     inkyCss = _loadText(getClass().getClassLoader().getResource("dk/br/zurb/mail/css/app.css"), Charset.defaultCharset());
+    htmlEncoding = "UTF-8";
   }
+
+
+  public String getCss()
+  {
+    return inkyCss;
+  }
+
+  public void setCss(String inkyCss)
+  {
+    this.inkyCss = inkyCss;
+  }
+  
   
   private Templates _loadXsl(URL res) {
     try {
@@ -83,7 +97,7 @@ public class Inky
     DOMSource s2 = new DOMSource(r1.getNode(), r1.getSystemId());
     Transformer xf2 = inky2.newTransformer();
     xf2.setOutputProperty(OutputKeys.METHOD, "html");
-    xf2.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+    xf2.setOutputProperty(OutputKeys.ENCODING, htmlEncoding);
     xf2.setOutputProperty(OutputKeys.INDENT, "no");
     xf2.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes"); 
     

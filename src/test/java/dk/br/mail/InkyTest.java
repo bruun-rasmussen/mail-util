@@ -21,7 +21,7 @@ import org.xml.sax.SAXException;
  */
 public class InkyTest extends TestCase
 {
-  private Inky inky;
+  private static Inky inky = new Inky();
 
   public InkyTest(String testName)
   {
@@ -31,7 +31,7 @@ public class InkyTest extends TestCase
   @Override
   protected void setUp() throws Exception
   {
-    inky = new Inky();
+//  inky = new Inky();
 
     super.setUp();
   }

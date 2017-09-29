@@ -1,5 +1,6 @@
 package dk.br.mail;
 
+import dk.br.zurb.inky.Inky;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -488,7 +489,7 @@ public class MailMessageParser
     }
     return result.toString();
   }
-
+  
  /**
    * Converts an org.w3c.dom.NodeList to a Java String.
    *
@@ -499,10 +500,9 @@ public class MailMessageParser
    */
   private static String _htmlText(NodeList nodeList, String encoding)
   {
-    Transformer xf = _htmlSerializer(encoding);
     try
     {
-      byte xml[] = _serialize(nodeList, xf);
+      byte xml[] = _inky(nodeList);
       return new String(xml, encoding);
     }
     catch (UnsupportedEncodingException ex)
@@ -511,43 +511,26 @@ public class MailMessageParser
     }
   }
 
-  private static byte[] _serialize(NodeList nodeList, Transformer xf)
+  private static Inky inky = new Inky();
+
+  private static byte[] _inky(NodeList nodeList)
   {
     if (nodeList.getLength() == 0)
       return new byte[0];
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-    // NOTE: this is way too late to apply the FilterWriter -- it this stage,
-    // any invalid characters will already have been translated, e.g. from '\x04'
-    // to "&#4;". This application of XmlFilterWriter, I guess, is just dead weight.
-    //  XmlFilterWriter xout = new XmlFilterWriter(out);
     Result result = new StreamResult(out);
     try {
       for (int i = 0; i < nodeList.getLength(); i++) {
         DOMSource source = new DOMSource(nodeList.item(i));
-        xf.transform(source, result);
+        inky.transform(source, result);
       }
       return out.toByteArray();
     }
     catch (TransformerException ex)
     {
       throw new RuntimeException("XML serialization error", ex);
-    }
-  }
-
-  private static Transformer _htmlSerializer(String encoding)
-  {
-    try {
-      Transformer xf = TransformerFactory.newInstance().newTransformer();
-      xf.setOutputProperty(OutputKeys.METHOD, "html");
-      xf.setOutputProperty(OutputKeys.ENCODING, encoding);
-      xf.setOutputProperty(OutputKeys.INDENT, "no");
-      xf.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-      return xf;
-    }
-    catch (TransformerException ex) {
-      throw new RuntimeException("Kan ikke initialisere XSLT processor", ex);
     }
   }
 }
