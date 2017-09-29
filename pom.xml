@@ -7,7 +7,7 @@
 
   <groupId>dk.es.br</groupId>
   <artifactId>mail-util</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>0.9.2-SNAPSHOT</version>
 
   <name>Mail Helper Classes</name>
   <description>
@@ -41,7 +41,7 @@
     <dependency>
       <groupId>dk.br</groupId>
       <artifactId>zurb-email</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>0.1</version>
     </dependency>
 
     <dependency>
