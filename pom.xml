@@ -7,7 +7,7 @@
 
   <groupId>dk.es.br</groupId>
   <artifactId>mail-util</artifactId>
-  <version>0.9.3-SNAPSHOT</version>
+  <version>0.9.3</version>
 
   <name>Mail Helper Classes</name>
   <description>
