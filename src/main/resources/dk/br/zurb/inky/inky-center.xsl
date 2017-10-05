@@ -8,6 +8,8 @@
     </xsl:copy>
   </xsl:template>
 
+  <xsl:template match="@size|@size-sm|@size-lg|@small|@large" />
+
   <xsl:template match="*">
     <xsl:copy>
       <xsl:choose>

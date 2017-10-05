@@ -2,7 +2,8 @@
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
-  <xsl:param name="inky-css" select="'body { width: 100% !important; min-width: 100%; margin: 0; Margin: 0; padding: 0; box-sizing: border-box; }'" />
+  <!-- xsl:param name="inky-css" select="'body { width: 100% !important; min-width: 100%; margin: 0; Margin: 0; padding: 0; box-sizing: border-box; }'" / -->
+  <xsl:param name="common-css" select="'body { width: 100% !important; min-width: 100%; margin: 0; Margin: 0; padding: 0; box-sizing: border-box; }'" />
   <xsl:param name="column-count" select="12" />
   
   <xsl:template match="@*|node()">
@@ -16,7 +17,7 @@
       <xsl:apply-templates />
       <style type="text/css">
         <xsl:comment>
-          <xsl:value-of select="$inky-css" />
+          <xsl:value-of select="$common-css" />
         </xsl:comment>
       </style>
     </xsl:copy>    
@@ -251,7 +252,6 @@
 
 
 <!--
-
     // <callout>
     case this.components.callout:
       var classes = ['callout-inner'];
