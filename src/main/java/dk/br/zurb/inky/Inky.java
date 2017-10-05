@@ -24,6 +24,10 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -188,5 +192,18 @@ public class Inky
     }
     if (s.length() > 0)
       e.setAttribute("style", s);
+  }
+
+  public static boolean containsInky(Node src)
+  {
+    try {
+      XPathExpression hasInky = XPathFactory.newInstance().newXPath().compile("//row|//columns|//callout");
+      NodeList ns = (NodeList)hasInky.evaluate(src, XPathConstants.NODESET);
+      LOG.info("has inky? [\"{}\"]", ns);
+      return ns.getLength() > 0;
+    }
+    catch (XPathExpressionException ex) {
+      throw new RuntimeException("XML serialization error", ex);
+    }
   }
 }

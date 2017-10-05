@@ -9,11 +9,15 @@ import javax.mail.internet.*;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.*;
+import org.xml.sax.InputSource;
 
 /**
  * @author     TietoEnator Consulting
@@ -240,7 +244,7 @@ public class MailMessageParser
         {
           if (m_baseHref == null)
             throw new IOException("cannot resolve '"+ref+"' - no <base href=\"...\"> present");
-          msg.addRelatedBodyPart(partId, MailPartSource.from(m_baseHref.resolve(ref).toURL()));          
+          msg.addRelatedBodyPart(partId, MailPartSource.from(m_baseHref.resolve(ref).toURL()));
         }
       }
     }
@@ -373,7 +377,7 @@ public class MailMessageParser
      */
     private void replaceResource(Element elem, String resourceAttribute)
       throws DOMException, IOException
-    {     
+    {
       String urlText = elem.getAttribute(resourceAttribute);
 
       if (StringUtils.isEmpty(urlText))
@@ -489,7 +493,7 @@ public class MailMessageParser
     }
     return result.toString();
   }
-  
+
  /**
    * Converts an org.w3c.dom.NodeList to a Java String.
    *
@@ -511,7 +515,7 @@ public class MailMessageParser
     }
   }
 
-  private static Inky inky = new Inky();
+  private final static Inky INKY = new Inky();
 
   private static byte[] _inky(NodeList nodeList)
   {
@@ -523,10 +527,31 @@ public class MailMessageParser
     Result result = new StreamResult(out);
     try {
       for (int i = 0; i < nodeList.getLength(); i++) {
-        DOMSource source = new DOMSource(nodeList.item(i));
-        inky.transform(source, result);
+        Node item = nodeList.item(i);
+
+        if (Inky.containsInky(item))
+          INKY.transform(new DOMSource(item), result);
+        else
+          _serialize(new DOMSource(item), result);
       }
       return out.toByteArray();
+    }
+    catch (TransformerException ex)
+    {
+      throw new RuntimeException("XML serialization error", ex);
+    }
+  }
+
+  private static void _serialize(Source source, Result result)
+  {
+    try {
+      Transformer xf = TransformerFactory.newInstance().newTransformer();
+      xf.setOutputProperty(OutputKeys.METHOD, "html");
+      xf.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+      xf.setOutputProperty(OutputKeys.INDENT, "no");
+      xf.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+
+      xf.transform(source, result);
     }
     catch (TransformerException ex)
     {

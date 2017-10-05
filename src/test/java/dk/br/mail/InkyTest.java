@@ -42,27 +42,38 @@ public class InkyTest extends TestCase
   }
 
   public void testOurOwn() throws IOException, TransformerException, SAXException {
-    checkTemplate("br_order-ex.html");
-    checkTemplate("br_vores-vurdering.html");
-    checkTemplate("br_newsletter.html");
+    checkZurbResourceTemplate("br_order-ex.html");
+    checkZurbResourceTemplate("br_vores-vurdering.html");
+    checkZurbResourceTemplate("br_newsletter.html");
+
+    checkZurbResourceTemplate("sidebar-hero.html");
+    
+    checkTemplate(getClass().getClassLoader().getResource("dk/br/sample/no-inky.html"), false);
   }
 
   public void __testThis() throws IOException, TransformerException, SAXException {
-    checkTemplate("drip.html");
-    checkTemplate("hero.html");
-    checkTemplate("sidebar.html");
-    checkTemplate("sidebar-hero.html");
+    checkZurbResourceTemplate("drip.html");
+    checkZurbResourceTemplate("hero.html");
+    checkZurbResourceTemplate("sidebar.html");
   }
 
-  private void checkTemplate(String src) throws IOException, TransformerException, SAXException {
+  private void checkZurbResourceTemplate(String src) throws IOException, TransformerException, SAXException {
     URL srcUrl = getClass().getClassLoader().getResource("dk/br/zurb/mail/source/pages/" + src);
+    checkTemplate(srcUrl, true);
+  }
+
+  private void checkTemplate(URL srcUrl, boolean containsInky) 
+          throws IOException, TransformerException, SAXException {
     URLConnection urlConn = srcUrl.openConnection();
     InputStream is = urlConn.getInputStream();
     org.jsoup.nodes.Document soupDoc = Jsoup.parse(is, urlConn.getContentEncoding(), srcUrl.toExternalForm());
 
     W3CDom w3cDom = new W3CDom();
     Document doc = w3cDom.fromJsoup(soupDoc);
-
-    inky.transform(new DOMSource(doc), new StreamResult(new File(src)));
+    
+    assertEquals(containsInky, Inky.containsInky(doc));
+    
+    File out = new File(srcUrl.getPath());
+    inky.transform(new DOMSource(doc), new StreamResult(new File(out.getName())));
   }
 }
