@@ -42,6 +42,7 @@ public class InkyTest extends TestCase
   }
 
   public void testOurOwn() throws IOException, TransformerException, SAXException {
+    checkZurbResourceTemplate("br_ov-kommentar.html");
     checkZurbResourceTemplate("br_order-ex.html");
     checkZurbResourceTemplate("br_vores-vurdering.html");
     checkZurbResourceTemplate("br_newsletter.html");
@@ -74,6 +75,7 @@ public class InkyTest extends TestCase
     assertEquals(containsInky, Inky.containsInky(doc));
     
     File out = new File(srcUrl.getPath());
-    inky.transform(new DOMSource(doc), new StreamResult(new File(out.getName())));
+    inky.transform(new DOMSource(doc), new StreamResult(new File("N_" + out.getName())), false);
+    inky.transform(new DOMSource(doc), new StreamResult(new File("I_" + out.getName())), true);
   }
 }

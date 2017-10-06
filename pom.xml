@@ -35,7 +35,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.6.6</version>
+      <version>1.7.13</version>
     </dependency>
 
     <dependency>
@@ -47,7 +47,7 @@
     <dependency>
       <groupId>dk.br</groupId>
       <artifactId>zurb-email</artifactId>
-      <version>0.1.1</version>
+      <version>0.1.2-SNAPSHOT</version>
     </dependency>
 
     <dependency>
@@ -59,7 +59,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>1.6.6</version>
+      <version>1.7.13</version>
       <scope>test</scope>
     </dependency>
 

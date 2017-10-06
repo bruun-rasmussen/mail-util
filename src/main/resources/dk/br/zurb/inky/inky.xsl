@@ -2,8 +2,9 @@
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
-  <!-- xsl:param name="inky-css" select="'body { width: 100% !important; min-width: 100%; margin: 0; Margin: 0; padding: 0; box-sizing: border-box; }'" / -->
-  <xsl:param name="common-css" select="'body { width: 100% !important; min-width: 100%; margin: 0; Margin: 0; padding: 0; box-sizing: border-box; }'" />
+  <xsl:param name="outline-css" select="'body { width: 100% !important; min-width: 100%; margin: 0; Margin: 0; padding: 0; box-sizing: border-box; }'" />
+  <xsl:param name="styling-css" />
+
   <xsl:param name="column-count" select="12" />
   
   <xsl:template match="@*|node()">
@@ -15,11 +16,23 @@
   <xsl:template match="html[body//row|body//columns|body//container|body//wrapper]/head">
     <xsl:copy>
       <xsl:apply-templates />
-      <style type="text/css">
-        <xsl:comment>
-          <xsl:value-of select="$common-css" />
-        </xsl:comment>
-      </style>
+
+      <xsl:if test="$outline-css != ''">
+        <xsl:comment> responsive outline </xsl:comment>
+        <style type="text/css">
+          <xsl:comment>
+            <xsl:value-of select="$outline-css" />
+          </xsl:comment>
+        </style>        
+      </xsl:if>
+      <xsl:if test="$styling-css != ''">
+        <xsl:comment> inline styling </xsl:comment>
+        <style type="text/css">
+          <xsl:comment>
+            <xsl:value-of select="$styling-css" />
+          </xsl:comment>
+        </style>        
+      </xsl:if>
     </xsl:copy>    
   </xsl:template>
 

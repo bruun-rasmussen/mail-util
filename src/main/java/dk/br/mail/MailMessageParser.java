@@ -530,7 +530,7 @@ public class MailMessageParser
         Node item = nodeList.item(i);
 
         if (Inky.containsInky(item))
-          INKY.transform(new DOMSource(item), result);
+          INKY.transform(new DOMSource(item), result, true);
         else
           _serialize(new DOMSource(item), result);
       }

@@ -4,6 +4,7 @@ import cz.vutbr.web.css.CSSException;
 import cz.vutbr.web.css.CSSFactory;
 import cz.vutbr.web.css.NodeData;
 import cz.vutbr.web.css.StyleSheet;
+import cz.vutbr.web.css.Term;
 import cz.vutbr.web.domassign.Analyzer;
 import cz.vutbr.web.domassign.StyleMap;
 import java.io.ByteArrayOutputStream;
@@ -44,8 +45,9 @@ public class Inky
 
   private final static SAXTransformerFactory stf = (SAXTransformerFactory)TransformerFactory.newInstance();
 
-  private StyleSheet inlineCss;
-  private String commonCss;
+  private String responsiveOutlineCss;
+  private String inlinedStylingCss;
+  private StyleSheet inliner;  
   private Templates inky1;
   private Templates inky2;
   private String htmlEncoding;
@@ -59,26 +61,16 @@ public class Inky
   {
     inky1 = _loadXsl(getClass().getResource("inky.xsl"));
     inky2 = _loadXsl(getClass().getResource("inky-center.xsl"));
-    inlineCss = _loadCss(getClass().getClassLoader().getResource("dk/br/zurb/mail/css/app.css"));
-    commonCss = _loadText(getClass().getClassLoader().getResource("dk/br/zurb/mail/css/mq.css"), Charset.defaultCharset());
+
+    URL mq_css = getClass().getClassLoader().getResource("dk/br/zurb/mail/css/mq.css");
+    responsiveOutlineCss = _loadText(mq_css);
+    URL app_css = getClass().getClassLoader().getResource("dk/br/zurb/mail/css/app.css");
+    inlinedStylingCss = _loadText(app_css);
     htmlEncoding = "UTF-8";
-  }
 
-
-  /*public String getCss()
-  {
-    return inkyCss;
-  }
-
-  public void setCss(String inkyCss)
-  {
-    this.inkyCss = inkyCss;
-  }*/
-  private StyleSheet _loadCss(URL res)
-  {
     try
     {
-      return CSSFactory.parse(res, "UTF-8");
+      inliner = CSSFactory.parseString(inlinedStylingCss, app_css);
     }
     catch (IOException ex)
     {
@@ -86,7 +78,7 @@ public class Inky
     }
     catch (CSSException ex)
     {
-      LOG.error("{} failed to load", res, ex);
+      LOG.error("{} failed to load", app_css, ex);
       throw new RuntimeException(ex);
     }
   }
@@ -108,9 +100,9 @@ public class Inky
     }
   }
 
-  private String _loadText(URL res, Charset encoding)
+  private String _loadText(URL res)
   {
-    return new String(_load(res), encoding);
+    return new String(_load(res), Charset.defaultCharset());
   }
 
   private byte[] _load(URL res)
@@ -131,11 +123,13 @@ public class Inky
     return bo.toByteArray();
   }
 
-  public void transform(Source src, Result res)
+  public void transform(Source src, Result res, boolean useCssInliner)
           throws TransformerException
   {
     Transformer xf1 = inky1.newTransformer();
-    xf1.setParameter("common-css", commonCss);
+    xf1.setParameter("outline-css", responsiveOutlineCss);
+    if (!useCssInliner)
+      xf1.setParameter("styling-css", inlinedStylingCss);
     xf1.setParameter("column-count", 12);
 
     DOMResult r1 = new DOMResult();
@@ -148,8 +142,10 @@ public class Inky
     s.setOutputProperty(OutputKeys.INDENT, "yes");
     s.transform(new DOMSource(doc), new StreamResult(new java.io.File("test-mail.xml")));
     
-    StyleMap styles = new Analyzer(inlineCss).evaluateDOM(doc, "screen", true);
-    inlineCss(doc, styles);
+    if (useCssInliner) {
+      StyleMap styles = new Analyzer(inliner).evaluateDOM(doc, "screen", false);
+      inlineCss(doc, styles);
+    }
 
     DOMSource s2 = new DOMSource(doc, r1.getSystemId());
     Transformer xf2 = inky2.newTransformer();
@@ -185,10 +181,20 @@ public class Inky
     {
       if (prop == null)
         continue;
-      String val = css.getAsString(prop, true);
-      if (s.length() > 0 && !s.endsWith(";"))
-        s += ";";
-      s += prop + ":" + val;
+
+      try {
+        String val = css.getAsString(prop, false);
+        if (s.length() > 0 && !s.endsWith(";"))
+          s += ";";
+        s += prop + ":" + val;
+      }
+      catch (Exception ex) {
+        Term val = css.getValue(prop, false);
+        if (val == null)
+          continue;
+        Object v1 = val.getValue();
+        LOG.warn("<{}> \"{}:{};\" ignored ({}:{} = {})", e.getNodeName(), prop, val, val.getClass().getName(), v1.getClass().getName(), v1);
+      }
     }
     if (s.length() > 0)
       e.setAttribute("style", s);
