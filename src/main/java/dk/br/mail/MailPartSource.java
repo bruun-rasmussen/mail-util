@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author      osa
- * @version     $Id$
  */
 public abstract class MailPartSource
 {
@@ -44,7 +43,7 @@ public abstract class MailPartSource
     throws IOException
   {
     long t1 = System.currentTimeMillis();
-    LOG.debug("fetching " + url);
+    LOG.debug("fetching {}", url);
     URLConnection conn = url.openConnection();
     conn.connect();
     String contentType = conn.getContentType();
@@ -67,7 +66,7 @@ public abstract class MailPartSource
     {
       byte content[] = _readStream(is);
       long t2 = System.currentTimeMillis();
-      LOG.debug(name + ": fetched " + content.length + " bytes of " + (contentEncoding == null ? "" : "[" + contentEncoding + "]-encoded ") + contentType + " (" + (t2-t1) + "ms)");
+      LOG.debug("{}: fetched {} bytes of {} ({}ms)", name, content.length, (contentEncoding == null ? "" : "[" + contentEncoding + "]-encoded ") + contentType, t2-t1);
       return new BinaryData(contentType, contentEncoding, name, content);
     }
     finally
@@ -100,6 +99,7 @@ public abstract class MailPartSource
       m_urlSpec = url;
     }
 
+    @Override
     public DataSource _source() throws MessagingException {         
       // return new URLDataSource(m_urlSpec);
       String tsUrl = m_urlSpec.toString().replaceAll(Pattern.quote("$TS$"), Long.toString(System.currentTimeMillis()));
@@ -108,7 +108,7 @@ public abstract class MailPartSource
         URL url = new URL(tsUrl);
         try {
           BinaryData data = _read(url);
-          LOG.debug("attaching " + data);
+          LOG.debug("attaching {}", data);
           return data._source();
         }
         catch (IOException ex)
@@ -122,6 +122,7 @@ public abstract class MailPartSource
       }
     }
 
+    @Override
     public String toString() {
       return "[content from " + m_urlSpec + "]";
     }
@@ -152,6 +153,7 @@ public abstract class MailPartSource
       return m_content;
     }
 
+    @Override
     public boolean equals(Object o)
     {
       if (o == this)
@@ -170,6 +172,7 @@ public abstract class MailPartSource
 
     private Integer _hash;
 
+    @Override
     public int hashCode()
     {
       if (_hash == null)
@@ -183,6 +186,7 @@ public abstract class MailPartSource
       return _hash;
     }
 
+    @Override
     public String toString()
     {
       return "[" + m_name + ": " + m_content.length + " bytes of " + (m_contentEncoding == null ? "" : m_contentEncoding + "-encoded ") + m_contentType + "]";
@@ -203,24 +207,29 @@ public abstract class MailPartSource
       return StringUtils.isEmpty(m_name) ? "unknown" : m_name;
     }
     
+    @Override
     public DataSource _source()
     {
       return new DataSource() {
+        @Override
         public InputStream getInputStream() throws IOException
         {
           return new ByteArrayInputStream(m_content);
         }
 
+        @Override
         public OutputStream getOutputStream() throws IOException
         {
           throw new IOException(getName() + ": no output stream associated");
         }
 
+        @Override
         public String getContentType()
         {
           return BinaryData.this.getContentType();
         }
 
+        @Override
         public String getName()
         {
           return BinaryData.this.getName();

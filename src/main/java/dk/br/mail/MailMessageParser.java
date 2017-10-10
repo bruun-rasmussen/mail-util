@@ -9,20 +9,15 @@ import javax.mail.internet.*;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.*;
-import org.xml.sax.InputSource;
 
 /**
  * @author     TietoEnator Consulting
  * @since      15. juni 2004
- * @version    $Id$
  */
 public class MailMessageParser
 {
@@ -221,22 +216,23 @@ public class MailMessageParser
 
       // Attach the dereferenced resources to be included as "related" MIME parts in the
       // final result:
-      LOG.debug("HTML BODY: " + bodyText.length() + " characters");
+      LOG.debug("HTML BODY: {} characters", bodyText.length());
       for (Map.Entry<String,String> e : m_resources.entrySet())
       {
         String ref = e.getKey();
         String partId = e.getValue();
 
-        if (ref.startsWith("mem:/"))
+        if (ref.startsWith("mem:"))
         {
           MailPartSource binaryContent = m_resourceContent.get(ref);
           msg.addRelatedBodyPart(partId, binaryContent);
         }
-        else if (ref.startsWith("file:/"))
+        else if (ref.startsWith("res:"))
         {
-          msg.addRelatedBodyPart(partId, MailPartSource.from(new URL(ref)));
+          URL url = getClass().getClassLoader().getResource(ref.substring("res:".length()));
+          msg.addRelatedBodyPart(partId, MailPartSource.from(url));
         }
-        else if (ref.startsWith("http://") || ref.startsWith("https://"))
+        else if (ref.startsWith("file:") || ref.startsWith("http:") || ref.startsWith("https:") || ref.startsWith("jar:"))
         {
           msg.addRelatedBodyPart(partId, MailPartSource.from(new URL(ref)));
         }
@@ -424,12 +420,12 @@ public class MailMessageParser
     {
       // Store the resource content away in m_resources for attachment later, and
       // replace the URL-attribute by an appropriate intra-mail reference:
-      String partId = (String)m_resources.get(urlText);
+      String partId = m_resources.get(urlText);
       if (partId == null)
       {
         partId = "part." + (m_resources.size() + 1) + "." + System.currentTimeMillis() + "@mail";
         m_resources.put(urlText, partId);
-        LOG.debug(urlText + ": resource embedded as MIME part <" + partId + ">");
+        LOG.debug("{}: resource embedded as MIME part <{}>", urlText, partId);
       }
       return "cid:" + partId;
     }
@@ -470,7 +466,7 @@ public class MailMessageParser
     private String embedResource(String md5, byte content[])
     {
       String key = "local:" + md5;
-      String partId = (String)m_resources.get(key);
+      String partId = m_resources.get(key);
       if (partId == null)
       {
         partId = "part." + (m_resources.size() + 1) + "." + System.currentTimeMillis() + "@mail";

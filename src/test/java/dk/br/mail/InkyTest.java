@@ -20,7 +20,7 @@ import org.xml.sax.SAXException;
  */
 public class InkyTest extends TestCase
 {
-  private static Inky inky = new Inky();
+  private Inky inky;
 
   public InkyTest(String testName)
   {
@@ -30,7 +30,7 @@ public class InkyTest extends TestCase
   @Override
   protected void setUp() throws Exception
   {
-//  inky = new Inky();
+    inky = new Inky();
 
     super.setUp();
   }
@@ -42,6 +42,7 @@ public class InkyTest extends TestCase
   }
 
   public void testOurOwn() throws IOException, TransformerException, SAXException {
+    checkZurbResourceTemplate("br_soegeagent.html");
     checkZurbResourceTemplate("br_ov-kommentar.html");
     checkZurbResourceTemplate("br_order-ex.html");
     checkZurbResourceTemplate("br_vores-vurdering.html");
