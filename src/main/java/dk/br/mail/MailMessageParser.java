@@ -4,6 +4,7 @@ import dk.br.zurb.inky.Inky;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.regex.*;
 import javax.mail.internet.*;
 import javax.xml.transform.*;
@@ -73,7 +74,7 @@ public class MailMessageParser
   private MailMessageData tryParseMail(Node mailNode)
     throws AddressException, IOException
   {
-    LOG.debug("###    parsing " + mailNode.getNodeName());
+    LOG.debug("###    parsing {}", mailNode.getNodeName());
 
     MailMessageData msg = new MailMessageData();
 
@@ -88,13 +89,13 @@ public class MailMessageParser
       if ("subject".equals(propertyName))
       {
         String subject = _text(propertyNode);
-        LOG.debug("SUBJECT: " + subject);
+        LOG.debug("SUBJECT: {}", subject);
         msg.setSubject(subject);
       }
       else if ("plain-body".equals(propertyName))
       {
         String body = _text(propertyNode);
-        LOG.info("text/plain body: " + body.length() + " characters");
+        LOG.info("text/plain body: {} characters", body.length());
         msg.setPlainBody(body);
       }
       else if ("html-body".equals(propertyName))
@@ -123,7 +124,7 @@ public class MailMessageParser
       }
       else
       {
-        LOG.error(propertyName + ": invalid mail property");
+        LOG.error("{}: invalid mail property", propertyName);
       }
     }
 
@@ -195,7 +196,8 @@ public class MailMessageParser
 
   private static class HtmlPartParser
   {
-    URI m_baseHref;
+    boolean seenInky;
+    URL m_baseHref;
     Map<String,String> m_resources = new HashMap<String,String>();
     Map<String,MailPartSource> m_resourceContent = new HashMap<String,MailPartSource>();
 
@@ -203,6 +205,7 @@ public class MailMessageParser
       throws IOException
     {
       // Initialize:
+      seenInky = false;
       m_resources.clear();
       m_resourceContent.clear();
 
@@ -211,7 +214,7 @@ public class MailMessageParser
       digestHtmlNodeList(bodyNodes);
 
       // Serialize the modified back HTML to text:
-      String bodyText = _htmlText(bodyNodes, "iso-8859-1");
+      String bodyText = _htmlText(bodyNodes, "iso-8859-1", seenInky);
       msg.setHtmlBody(bodyText);
 
       // Attach the dereferenced resources to be included as "related" MIME parts in the
@@ -240,7 +243,15 @@ public class MailMessageParser
         {
           if (m_baseHref == null)
             throw new IOException("cannot resolve '"+ref+"' - no <base href=\"...\"> present");
-          msg.addRelatedBodyPart(partId, MailPartSource.from(m_baseHref.resolve(ref).toURL()));
+          URL src = new URL(m_baseHref, ref);
+          LOG.debug("\"{}\" relative to \"{}\":\n\t\"{}\"", URI.create(ref), m_baseHref, src);
+          try {
+            msg.addRelatedBodyPart(partId, MailPartSource.from(src));
+          }
+          catch (RuntimeException ex) {
+            LOG.error("{}: {}", src, ex.getMessage());
+            throw ex;
+          }
         }
       }
     }
@@ -273,9 +284,10 @@ public class MailMessageParser
       {
         String href = ((Element)node).getAttribute("href");
         try {
-          m_baseHref = new URI(href);
+          m_baseHref = new URL(href);
+          LOG.debug("base href: {}", m_baseHref);
         }
-        catch (URISyntaxException ex) {
+        catch (MalformedURLException ex) {
           LOG.error("bad <base href=\""+href+"\">", ex);
         }
       }
@@ -299,6 +311,16 @@ public class MailMessageParser
           || "th".equalsIgnoreCase(nodeName)) && nodeType == Node.ELEMENT_NODE)
       {
         replaceResource((Element)node, "background");
+      }
+      else if (("row".equalsIgnoreCase(nodeName)
+          || "columns".equalsIgnoreCase(nodeName)
+          || "callout".equalsIgnoreCase(nodeName)
+          || "container".equalsIgnoreCase(nodeName)
+          || "wrapper".equalsIgnoreCase(nodeName)
+          || "spacer".equalsIgnoreCase(nodeName)
+          || "callout".equalsIgnoreCase(nodeName)) && nodeType == Node.ELEMENT_NODE)
+      {
+        seenInky = true;
       }
       else if ("include".equalsIgnoreCase(nodeName))
       {
@@ -498,47 +520,44 @@ public class MailMessageParser
    * @param  compact  whether or not to maintain line breaks and indentation. Valid
    *  for "xml" and "html" methods only.
    */
-  private static String _htmlText(NodeList nodeList, String encoding)
+  private static String _htmlText(NodeList nodeList, String encoding, boolean useInky)
   {
+    if (nodeList.getLength() == 0)
+      return "";
+    
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    Result result = new StreamResult(out);
+
     try
     {
-      byte xml[] = _inky(nodeList);
-      return new String(xml, encoding);
+      if (useInky) {
+        Inky inky = new Inky();
+        for (int i = 0; i < nodeList.getLength(); i++) {
+          Node item = nodeList.item(i);
+          inky.transform(new DOMSource(item), result, true);
+        }
+      }
+      else {
+        Transformer s = _serializer();
+        for (int i = 0; i < nodeList.getLength(); i++) {
+          Node item = nodeList.item(i);
+          s.transform(new DOMSource(item), result);
+        }
+      }
+
+      return new String(out.toByteArray(), encoding);
     }
     catch (UnsupportedEncodingException ex)
     {
       throw new RuntimeException("XML serialization error", ex);
     }
-  }
-
-  private final static Inky INKY = new Inky();
-
-  private static byte[] _inky(NodeList nodeList)
-  {
-    if (nodeList.getLength() == 0)
-      return new byte[0];
-
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-    Result result = new StreamResult(out);
-    try {
-      for (int i = 0; i < nodeList.getLength(); i++) {
-        Node item = nodeList.item(i);
-
-        if (Inky.containsInky(item))
-          INKY.transform(new DOMSource(item), result, true);
-        else
-          _serialize(new DOMSource(item), result);
-      }
-      return out.toByteArray();
-    }
     catch (TransformerException ex)
     {
-      throw new RuntimeException("XML serialization error", ex);
+      throw new RuntimeException("XML transformation error", ex);
     }
   }
 
-  private static void _serialize(Source source, Result result)
+  private static Transformer _serializer()
   {
     try {
       Transformer xf = TransformerFactory.newInstance().newTransformer();
@@ -546,8 +565,7 @@ public class MailMessageParser
       xf.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
       xf.setOutputProperty(OutputKeys.INDENT, "no");
       xf.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-
-      xf.transform(source, result);
+      return xf;
     }
     catch (TransformerException ex)
     {

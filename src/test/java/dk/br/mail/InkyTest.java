@@ -66,17 +66,22 @@ public class InkyTest extends TestCase
 
   private void checkTemplate(URL srcUrl, boolean containsInky) 
           throws IOException, TransformerException, SAXException {
-    URLConnection urlConn = srcUrl.openConnection();
-    InputStream is = urlConn.getInputStream();
-    org.jsoup.nodes.Document soupDoc = Jsoup.parse(is, urlConn.getContentEncoding(), srcUrl.toExternalForm());
-
-    W3CDom w3cDom = new W3CDom();
-    Document doc = w3cDom.fromJsoup(soupDoc);
+    Document doc = htmlSouped(srcUrl);
     
     assertEquals(containsInky, Inky.containsInky(doc));
     
     File out = new File(srcUrl.getPath());
     inky.transform(new DOMSource(doc), new StreamResult(new File("N_" + out.getName())), false);
     inky.transform(new DOMSource(doc), new StreamResult(new File("I_" + out.getName())), true);
+  }
+
+  private static Document htmlSouped(URL srcUrl) throws IOException
+  {
+    URLConnection urlConn = srcUrl.openConnection();
+    InputStream is = urlConn.getInputStream();
+    org.jsoup.nodes.Document soupDoc = Jsoup.parse(is, urlConn.getContentEncoding(), srcUrl.toExternalForm());
+    
+    W3CDom w3cDom = new W3CDom();
+    return w3cDom.fromJsoup(soupDoc);
   }
 }

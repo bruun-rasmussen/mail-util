@@ -59,8 +59,8 @@ public class Inky
 
   private void init()
   {
-    inky1 = _loadXsl(getClass().getResource("inky.xsl"));
-    inky2 = _loadXsl(getClass().getResource("inky-center.xsl"));
+    inky1 = _loadXsl(getClass().getResource("inky-1.xsl"));
+    inky2 = _loadXsl(getClass().getResource("inky-2.xsl"));
 
     URL mq_css = getClass().getClassLoader().getResource("dk/br/zurb/mail/css/mq.css");
     responsiveOutlineCss = _loadText(mq_css);
@@ -205,7 +205,7 @@ public class Inky
     try {
       XPathExpression hasInky = XPathFactory.newInstance().newXPath().compile("//row|//columns|//callout");
       NodeList ns = (NodeList)hasInky.evaluate(src, XPathConstants.NODESET);
-      LOG.info("has inky? [\"{}\"]", ns);
+      LOG.info("has inky? [\"{}\" ({})]", ns, ns.getLength());
       return ns.getLength() > 0;
     }
     catch (XPathExpressionException ex) {

@@ -13,7 +13,44 @@
     </xsl:copy>
   </xsl:template>
 
-  <xsl:template match="html[body//row|body//columns|body//container|body//wrapper]/head">
+  <xsl:template match="html[body//row|body//columns|body//container|body//wrapper]">
+    <xsl:copy>
+      <xsl:choose>
+        <xsl:when test="head">
+          <xsl:apply-templates select="head" mode="embed-styling" />
+          <xsl:apply-templates select="body" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates select="body" mode="embed-styling" />          
+        </xsl:otherwise>
+      </xsl:choose>      
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="body" mode="embed-styling">
+    <xsl:copy>
+      <xsl:if test="$outline-css != ''">
+        <xsl:comment> responsive outline </xsl:comment>
+        <style type="text/css">
+          <xsl:comment>
+            <xsl:value-of select="$outline-css" />
+          </xsl:comment>
+        </style>        
+      </xsl:if>
+      <xsl:if test="$styling-css != ''">
+        <xsl:comment> inline styling </xsl:comment>
+        <style type="text/css">
+          <xsl:comment>
+            <xsl:value-of select="$styling-css" />
+          </xsl:comment>
+        </style>        
+      </xsl:if>
+
+      <xsl:apply-templates />
+    </xsl:copy>    
+  </xsl:template>
+
+  <xsl:template match="head" mode="embed-styling">
     <xsl:copy>
       <xsl:apply-templates />
 
