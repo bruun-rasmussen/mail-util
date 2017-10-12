@@ -4,7 +4,6 @@ import dk.br.zurb.inky.Inky;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.regex.*;
 import javax.mail.internet.*;
 import javax.xml.transform.*;
@@ -512,6 +511,8 @@ public class MailMessageParser
     return result.toString();
   }
 
+  private static Inky inky;
+  
  /**
    * Converts an org.w3c.dom.NodeList to a Java String.
    *
@@ -531,7 +532,8 @@ public class MailMessageParser
     try
     {
       if (useInky) {
-        Inky inky = new Inky();
+        if (inky == null)
+          inky = new Inky();
         for (int i = 0; i < nodeList.getLength(); i++) {
           Node item = nodeList.item(i);
           inky.transform(new DOMSource(item), result, true);

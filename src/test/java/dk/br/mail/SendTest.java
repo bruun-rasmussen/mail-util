@@ -67,7 +67,7 @@ public class SendTest
 
     MimeMessage msg = src.compose(session, true);
     System.out.println("whoa, " + msg + " ready to send");
-  //Transport.send(msg);
+    Transport.send(msg);
   }
 
   private static Document htmlSouped(URL srcUrl) throws IOException

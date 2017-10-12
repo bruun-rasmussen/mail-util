@@ -50,7 +50,7 @@ public class InkyTest extends TestCase
 
     checkZurbResourceTemplate("sidebar-hero.html");
     
-    checkTemplate(getClass().getClassLoader().getResource("dk/br/sample/no-inky.html"), false);
+    checkTemplate(getClass().getClassLoader().getResource("dk/br/sample/no-inky.html"));
   }
 
   public void __testThis() throws IOException, TransformerException, SAXException {
@@ -61,15 +61,13 @@ public class InkyTest extends TestCase
 
   private void checkZurbResourceTemplate(String src) throws IOException, TransformerException, SAXException {
     URL srcUrl = getClass().getClassLoader().getResource("dk/br/zurb/mail/source/pages/" + src);
-    checkTemplate(srcUrl, true);
+    checkTemplate(srcUrl);
   }
 
-  private void checkTemplate(URL srcUrl, boolean containsInky) 
+  private void checkTemplate(URL srcUrl) 
           throws IOException, TransformerException, SAXException {
     Document doc = htmlSouped(srcUrl);
-    
-    assertEquals(containsInky, Inky.containsInky(doc));
-    
+        
     File out = new File(srcUrl.getPath());
     inky.transform(new DOMSource(doc), new StreamResult(new File("N_" + out.getName())), false);
     inky.transform(new DOMSource(doc), new StreamResult(new File("I_" + out.getName())), true);
