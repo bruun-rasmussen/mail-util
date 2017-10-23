@@ -31,8 +31,21 @@ public abstract class MailPartSource
     return new DataHandler(ds);
   }
   
-  public static MailPartSource from(URL url) {
+  /**
+   * Return a lazy-loading part source wrapping a URL for the target resource to 
+   * be fetched and embedded during the mail composition. 
+   */
+  public static MailPartSource remote(URL url) {
     return new RemoteHtmlResource(url);
+  }
+  
+  /**
+   * Fetch the target resource and return the content as a mail part source to be 
+   * embedded during mail composition.
+   * @throws  IOException    if the content cannot be fetched
+   */
+  public static MailPartSource local(URL url) throws IOException {
+    return _read(url);
   }
 
   public static BinaryData from(String contentType, String contentEncoding, String name, byte content[]) {

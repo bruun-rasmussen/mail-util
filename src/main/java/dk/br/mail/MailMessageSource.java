@@ -6,7 +6,6 @@ import javax.mail.internet.MimeMessage;
 /**
  * @author     Bruun Rasmussen Kunstauktioner
  * @since      12. maj 2004
- * @version    $Id$
  */
 public interface MailMessageSource
 {

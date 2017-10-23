@@ -119,7 +119,7 @@ public class MailMessageParser
       else if ("attachment".equals(propertyName))
       {
         String src = ((Element)propertyNode).getAttribute("src");
-        msg.attach(MailPartSource.from(new URL(src)));
+        msg.attach(MailPartSource.remote(new URL(src)));
       }
       else
       {
@@ -224,37 +224,11 @@ public class MailMessageParser
         String ref = e.getKey();
         String partId = e.getValue();
 
-        if (ref.startsWith("mem:"))
-        {
-          MailPartSource binaryContent = m_resourceContent.get(ref);
-          msg.addRelatedBodyPart(partId, binaryContent);
-        }
-        else if (ref.startsWith("res:"))
-        {
-          URL url = getClass().getClassLoader().getResource(ref.substring("res:".length()));
-          msg.addRelatedBodyPart(partId, MailPartSource.from(url));
-        }
-        else if (ref.startsWith("file:") || ref.startsWith("http:") || ref.startsWith("https:") || ref.startsWith("jar:"))
-        {
-          msg.addRelatedBodyPart(partId, MailPartSource.from(new URL(ref)));
-        }
-        else
-        {
-          if (m_baseHref == null)
-            throw new IOException("cannot resolve '"+ref+"' - no <base href=\"...\"> present");
-          URL src = new URL(m_baseHref, ref);
-          LOG.debug("\"{}\" relative to \"{}\":\n\t\"{}\"", URI.create(ref), m_baseHref, src);
-          try {
-            msg.addRelatedBodyPart(partId, MailPartSource.from(src));
-          }
-          catch (RuntimeException ex) {
-            LOG.error("{}: {}", src, ex.getMessage());
-            throw ex;
-          }
-        }
+        MailPartSource partSource = partFromRef(ref);
+        msg.addRelatedBodyPart(partId, partSource);
       }
     }
-
+    
     private void digestHtmlNodeList(NodeList children)
       throws IOException
     {
@@ -495,6 +469,40 @@ public class MailMessageParser
         LOG.debug(key + ": resource embedded as MIME part <" + partId + ">");
       }
       return "cid:" + partId;
+    }
+
+    private MailPartSource partFromRef(String ref) throws IOException {
+      if (ref.startsWith("mem:"))
+      {
+        return m_resourceContent.get(ref);
+      }
+      else if (ref.startsWith("res:"))
+      {
+        URL url = getClass().getClassLoader().getResource(ref.substring("res:".length()));
+        return MailPartSource.local(url);
+      }
+      else if (ref.startsWith("file:") || ref.startsWith("jar:"))
+      {
+        return MailPartSource.local(new URL(ref));
+      }
+      else if (ref.startsWith("http:") || ref.startsWith("https:"))
+      {
+        return MailPartSource.remote(new URL(ref));
+      }
+      else
+      {
+        if (m_baseHref == null)
+          throw new IOException("cannot resolve '"+ref+"' - no <base href=\"...\"> present");
+        URL src = new URL(m_baseHref, ref);
+        LOG.debug("\"{}\" relative to \"{}\":\n\t\"{}\"", URI.create(ref), m_baseHref, src);
+        try {
+          return MailPartSource.remote(src);
+        }
+        catch (RuntimeException ex) {
+          LOG.error("{}: {}", src, ex.getMessage());
+          throw ex;
+        }
+      }      
     }
   }
 
