@@ -8,6 +8,7 @@ import cz.vutbr.web.css.Term;
 import cz.vutbr.web.domassign.Analyzer;
 import cz.vutbr.web.domassign.StyleMap;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -132,11 +133,21 @@ public class Inky
     xf1.transform(src, r1);
 
     Document doc = (Document)r1.getNode();
-    Transformer s = TransformerFactory.newInstance().newTransformer();
-    s.setOutputProperty(OutputKeys.METHOD, "xml");
-    s.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-    s.setOutputProperty(OutputKeys.INDENT, "yes");
-    s.transform(new DOMSource(doc), new StreamResult(new java.io.File("test-mail.xml")));
+
+    String xmlDebugFolder = System.getProperty("dk.es.xml.debug.folder");
+    if (xmlDebugFolder != null) {
+      File xmlDebugFile = new File(xmlDebugFolder, "test-mail.xml");
+      try {
+        Transformer s = TransformerFactory.newInstance().newTransformer();
+        s.setOutputProperty(OutputKeys.METHOD, "xml");
+        s.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        s.setOutputProperty(OutputKeys.INDENT, "yes");
+        s.transform(new DOMSource(doc), new StreamResult(xmlDebugFile));
+      }
+      catch (Exception ex) {
+        LOG.error("{}: failed to save debug info", xmlDebugFile.getAbsolutePath(), ex);
+      }
+    }
     
     if (useCssInliner) {
       StyleMap styles = new Analyzer(inliner).evaluateDOM(doc, "screen", false);
