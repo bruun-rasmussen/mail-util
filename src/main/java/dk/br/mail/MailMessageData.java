@@ -368,6 +368,7 @@ public final class MailMessageData
           DataHandler dh = res.getDataHandler();
           relatedBodyPart.setDataHandler(dh);
           relatedBodyPart.setHeader("Content-ID", "<" + partId + ">");
+          relatedBodyPart.setDisposition(Part.INLINE);
           related.addBodyPart(relatedBodyPart);
         }
         catch (MessagingException ex) {
