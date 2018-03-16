@@ -48,8 +48,13 @@ public abstract class MailPartSource
     return _read(url);
   }
 
-  public static BinaryData from(String contentType, String contentEncoding, String name, byte content[]) {
-    return new BinaryData(contentType, contentEncoding, name, content);
+  public static MailPartSource from(String contentType, String name, byte content[]) {
+    return new BinaryData(contentType, name, content);
+  }
+
+  @Deprecated
+  public static MailPartSource from(String contentType, String contentEncoding, String name, byte content[]) {
+    return from(contentType, name, content);
   }
 
   private static BinaryData _read(URL url)
@@ -80,7 +85,7 @@ public abstract class MailPartSource
       byte content[] = _readStream(is);
       long t2 = System.currentTimeMillis();
       LOG.debug("{}: fetched {} bytes of {} ({}ms)", name, content.length, (contentEncoding == null ? "" : "[" + contentEncoding + "]-encoded ") + contentType, t2-t1);
-      return new BinaryData(contentType, contentEncoding, name, content);
+      return new BinaryData(contentType, name, content);
     }
     finally
     {
@@ -144,19 +149,17 @@ public abstract class MailPartSource
   /*
    *  Utility class that is used to attach a PDF file object to an email.
    */
-  public static class BinaryData extends MailPartSource implements java.io.Serializable
+  private static class BinaryData extends MailPartSource implements java.io.Serializable, DataSource
   {
     final static long serialVersionUID = -7813275734783155287L;
 
     private final String m_contentType;
-    private final String m_contentEncoding;
     private final String m_name;
     private final byte m_content[];
 
-    public BinaryData(String contentType, String contentEncoding, String name, byte content[])
+    public BinaryData(String contentType, String name, byte content[])
     {
       m_contentType = contentType;
-      m_contentEncoding = contentEncoding;
       m_name = name;
       m_content = content;
     }
@@ -179,7 +182,6 @@ public abstract class MailPartSource
       return
              StringUtils.equals(this.m_name, that.m_name)
           && StringUtils.equals(this.m_contentType, that.m_contentType)
-          && StringUtils.equals(this.m_contentEncoding, that.m_contentEncoding)
           && Arrays.equals(this.m_content, that.m_content);
     }
 
@@ -202,12 +204,7 @@ public abstract class MailPartSource
     @Override
     public String toString()
     {
-      return "[" + m_name + ": " + m_content.length + " bytes of " + (m_contentEncoding == null ? "" : m_contentEncoding + "-encoded ") + m_contentType + "]";
-    }
-
-    public String getContentEncoding()
-    {
-      return m_contentEncoding;
+      return "[" + m_name + ": " + m_content.length + " bytes of " + m_contentType + "]";
     }
 
     public String getContentType()
@@ -223,31 +220,19 @@ public abstract class MailPartSource
     @Override
     public DataSource _source()
     {
-      return new DataSource() {
-        @Override
-        public InputStream getInputStream() throws IOException
-        {
-          return new ByteArrayInputStream(m_content);
-        }
+      return this;
+    }
 
-        @Override
-        public OutputStream getOutputStream() throws IOException
-        {
-          throw new IOException(getName() + ": no output stream associated");
-        }
+    @Override
+    public InputStream getInputStream() throws IOException
+    {
+      return new ByteArrayInputStream(m_content);
+    }
 
-        @Override
-        public String getContentType()
-        {
-          return BinaryData.this.getContentType();
-        }
-
-        @Override
-        public String getName()
-        {
-          return BinaryData.this.getName();
-        }
-      };
+    @Override
+    public OutputStream getOutputStream() throws IOException
+    {
+      throw new UnsupportedOperationException("not writable");
     }
   }
 }
