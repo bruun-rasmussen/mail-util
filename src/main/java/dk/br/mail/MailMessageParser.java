@@ -39,7 +39,7 @@ public class MailMessageParser
       Node mailList = mailListNodes.item(j);
       if ("email-list".equals(mailList.getNodeName()))
       {
-        LOG.debug("### parsing " + mailList.getNodeName());
+        LOG.debug("### parsing {}", mailList.getNodeName());
         NodeList mailNodes = mailList.getChildNodes();
         for (int i = 0; i < mailNodes.getLength(); i++)
         {
@@ -113,7 +113,7 @@ public class MailMessageParser
         String value = ((Element)propertyNode).getAttribute("value");
         if (StringUtils.isEmpty(value))
           value = _text(propertyNode);
-        LOG.debug(name + ": " + value);
+        LOG.debug("{}: {}", name, value);
         msg.setCustomHeader(name, value);
       }
       else if ("attachment".equals(propertyName))
@@ -147,7 +147,7 @@ public class MailMessageParser
     String type = addressElement.getNodeName();
     InternetAddress addr = getAddress(addressElement);
     addr.validate();
-    LOG.debug(type + " " + addr.toString());
+    LOG.debug("{} {}", type, addr);
 
     if ("to".equals(type))
       msg.addRecipientTo(addr);
@@ -166,7 +166,7 @@ public class MailMessageParser
     else if ("bounce-to".equals(type))
       msg.setBounceAddress(addr);
     else
-      LOG.error(type + ": unknown address type");
+      LOG.error("{}: unknown address type", type);
   }
 
   /**
@@ -261,7 +261,7 @@ public class MailMessageParser
           LOG.debug("base href: {}", m_baseHref);
         }
         catch (MalformedURLException ex) {
-          LOG.error("bad <base href=\""+href+"\">", ex);
+          LOG.error("bad <base href=\"{}\">", href, ex);
         }
       }
       else if ("link".equalsIgnoreCase(nodeName) && nodeType == Node.ELEMENT_NODE)
@@ -320,7 +320,7 @@ public class MailMessageParser
       // Do nothing right now - this could be a great place
       // for "BBCode"-style post-processing variable text.
       if (LOG.isDebugEnabled())
-        LOG.debug("### '" + text.getData() + "'");
+        LOG.debug("### '{}'", text.getData());
     }
 
     private void digestWebLink(Element anchor)
@@ -347,7 +347,7 @@ public class MailMessageParser
       if (!oldStyle.equals(newStyle))
       {
         if (LOG.isDebugEnabled())
-          LOG.debug("### STYLE FIXUP: \"" + oldStyle + "\" -> \"" + newStyle + "\"");
+          LOG.debug("### STYLE FIXUP: \"{}\" -> \"{}\"", oldStyle, newStyle);
         attr.setValue(newStyle);
       }
     }
@@ -382,14 +382,13 @@ public class MailMessageParser
           {
             String md5 = ((Element)child).getAttribute("md5");
             String contentType = ((Element)child).getAttribute("type");
-            String contentEncoding = ((Element)child).getAttribute("encoding");
             urlText = "mem:/" + md5;
             MailPartSource binaryContent = (MailPartSource)m_resourceContent.get(urlText);
             if (binaryContent == null)
             {
               String binaryContentBase64 = _text(child);
               byte bytes[] = Base64.decodeBase64(binaryContentBase64.getBytes());
-              binaryContent = MailPartSource.from(contentType, contentEncoding, md5, bytes);
+              binaryContent = MailPartSource.from(contentType, md5, bytes);
               m_resourceContent.put(urlText, binaryContent);
             }
             break;
@@ -432,7 +431,7 @@ public class MailMessageParser
       throws DOMException, IOException
     {
       String urlText = ((Element)node).getAttribute("src");
-      LOG.debug(urlText + ": embedding resource");
+      LOG.debug("{}: embedding resource", urlText);
       if (!StringUtils.isEmpty(urlText))
       {
         try
@@ -466,7 +465,7 @@ public class MailMessageParser
       {
         partId = "part." + (m_resources.size() + 1) + "." + System.currentTimeMillis() + "@mail";
         m_resources.put(key, partId);
-        LOG.debug(key + ": resource embedded as MIME part <" + partId + ">");
+        LOG.debug("{}: resource embedded as MIME part <{}>", key, partId);
       }
       return "cid:" + partId;
     }
