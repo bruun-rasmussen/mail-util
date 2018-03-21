@@ -23,7 +23,12 @@ public class MailMessageParser
 {
   private final static Logger LOG = LoggerFactory.getLogger(MailMessageParser.class);
 
-  private MailMessageParser() { }
+  private final boolean useCssInliner;
+
+  private MailMessageParser()
+  {
+    useCssInliner = "1|yes|true".contains(System.getProperty("dk.br.mail.inline-css", "false"));
+  }
 
   private final static Pattern CSS_URL_PATTERN = Pattern.compile("(.*)url\\(([^\\)]+)\\)(.*)");
 
@@ -193,7 +198,7 @@ public class MailMessageParser
   }
 
 
-  private static class HtmlPartParser
+  private class HtmlPartParser
   {
     boolean seenInky;
     URL m_baseHref;
@@ -213,7 +218,7 @@ public class MailMessageParser
       digestHtmlNodeList(bodyNodes);
 
       // Serialize the modified back HTML to text:
-      String bodyText = _htmlText(bodyNodes, "iso-8859-1", seenInky);
+      String bodyText = _htmlText(bodyNodes, "iso-8859-1", seenInky, useCssInliner);
       msg.setHtmlBody(bodyText);
 
       // Attach the dereferenced resources to be included as "related" MIME parts in the
@@ -228,7 +233,7 @@ public class MailMessageParser
         msg.addRelatedBodyPart(partId, partSource);
       }
     }
-    
+
     private void digestHtmlNodeList(NodeList children)
       throws IOException
     {
@@ -501,7 +506,7 @@ public class MailMessageParser
           LOG.error("{}: {}", src, ex.getMessage());
           throw ex;
         }
-      }      
+      }
     }
   }
 
@@ -519,7 +524,7 @@ public class MailMessageParser
   }
 
   private static Inky inky;
-  
+
  /**
    * Converts an org.w3c.dom.NodeList to a Java String.
    *
@@ -528,11 +533,11 @@ public class MailMessageParser
    * @param  compact  whether or not to maintain line breaks and indentation. Valid
    *  for "xml" and "html" methods only.
    */
-  private static String _htmlText(NodeList nodeList, String encoding, boolean useInky)
+  private static String _htmlText(NodeList nodeList, String encoding, boolean useInky, boolean useCssInliner)
   {
     if (nodeList.getLength() == 0)
       return "";
-    
+
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Result result = new StreamResult(out);
 
@@ -543,7 +548,7 @@ public class MailMessageParser
           inky = new Inky();
         for (int i = 0; i < nodeList.getLength(); i++) {
           Node item = nodeList.item(i);
-          inky.transform(new DOMSource(item), result, true);
+          inky.transform(new DOMSource(item), result, useCssInliner);
         }
       }
       else {
