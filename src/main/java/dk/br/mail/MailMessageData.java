@@ -25,13 +25,13 @@ public final class MailMessageData
   private final static String MIME_TYPE_HTML = "text/html";
   private final static String MIME_TYPE_PLAIN = "text/plain; charset=UTF-8; format=flowed";
 
-  private Address m_sender;
-  private Address m_bounceTo;
-  private final List<Address> m_from = new LinkedList<Address>();
-  private final List<Address> m_replyTo = new LinkedList<Address>();
-  private final List<Address> m_recipientsTo = new LinkedList<Address>();
-  private final List<Address> m_recipientsCc = new LinkedList<Address>();
-  private final List<Address> m_recipientsBcc = new LinkedList<Address>();
+  private InternetAddress m_sender;
+  private InternetAddress m_bounceTo;
+  private final List<InternetAddress> m_from = new LinkedList<InternetAddress>();
+  private final List<InternetAddress> m_replyTo = new LinkedList<InternetAddress>();
+  private final List<InternetAddress> m_recipientsTo = new LinkedList<InternetAddress>();
+  private final List<InternetAddress> m_recipientsCc = new LinkedList<InternetAddress>();
+  private final List<InternetAddress> m_recipientsBcc = new LinkedList<InternetAddress>();
   private Date m_sentDate = new Date();
   private String m_subject = "(no subject)";
   private String m_plainText;
@@ -46,12 +46,12 @@ public final class MailMessageData
     m_customHeaders.put(name, value);
   }
 
-  public void addReplyTo(Address addresses[])
+  public void addReplyTo(InternetAddress addresses[])
   {
     m_replyTo.addAll(Arrays.asList(addresses));
   }
 
-  public void addReplyTo(Address address)
+  public void addReplyTo(InternetAddress address)
   {
     m_replyTo.add(address);
   }
@@ -66,7 +66,7 @@ public final class MailMessageData
     m_sentDate = date;
   }
 
-  public void setFrom(Address address)
+  public void setFrom(InternetAddress address)
   {
     m_from.clear();
     addFrom(address);
@@ -77,23 +77,23 @@ public final class MailMessageData
     setFrom(encodeAddress(name, email));
   }
 
-  public void addFrom(Address address)
+  public void addFrom(InternetAddress address)
   {
     m_from.add(address);
   }
 
-  public void setSender(Address address)
+  public void setSender(InternetAddress address)
   {
     m_sender = address;
   }
 
-  public void setBounceAddress(Address address)
+  public void setBounceAddress(InternetAddress address)
   {
     m_bounceTo = address;
   }
 
   @Override
-  public Address getBounceAddress()
+  public InternetAddress getBounceAddress()
   {
     return m_bounceTo;
   }
@@ -114,7 +114,7 @@ public final class MailMessageData
     m_htmlText = text;
   }
 
-  public void addRecipientTo(Address address)
+  public void addRecipientTo(InternetAddress address)
   {
     m_recipientsTo.add(address);
   }
@@ -124,12 +124,12 @@ public final class MailMessageData
     addRecipientTo(encodeAddress(name, email));
   }
 
-  public void addRecipientsTo(Address addresses[])
+  public void addRecipientsTo(InternetAddress addresses[])
   {
     m_recipientsTo.addAll(Arrays.asList(addresses));
   }
 
-  public void addRecipientCc(Address address)
+  public void addRecipientCc(InternetAddress address)
   {
     m_recipientsCc.add(address);
   }
@@ -139,12 +139,12 @@ public final class MailMessageData
     addRecipientCc(encodeAddress(name, email));
   }
 
-  public void addRecipientsCc(Address addresses[])
+  public void addRecipientsCc(InternetAddress addresses[])
   {
     m_recipientsCc.addAll(Arrays.asList(addresses));
   }
 
-  public void addRecipientBcc(Address address)
+  public void addRecipientBcc(InternetAddress address)
   {
     m_recipientsBcc.add(address);
   }
@@ -154,12 +154,12 @@ public final class MailMessageData
     addRecipientBcc(encodeAddress(name, email));
   }
 
-  public void addRecipientsBcc(Address addresses[])
+  public void addRecipientsBcc(InternetAddress addresses[])
   {
     m_recipientsBcc.addAll(Arrays.asList(addresses));
   }
 
-  private static Address[] toAddressArray(List<Address> addresses)
+  private static Address[] toAddressArray(List<InternetAddress> addresses)
   {
     return addresses.toArray(new Address[addresses.size()]);
   }
@@ -389,11 +389,11 @@ public final class MailMessageData
 
 
   @Override
-  public Address getFirstRecipient()
+  public InternetAddress getFirstRecipient()
   {
-    return !m_recipientsTo.isEmpty() ? (Address)m_recipientsTo.get(0) :
-            !m_recipientsCc.isEmpty() ? (Address)m_recipientsCc.get(0) :
-            !m_recipientsBcc.isEmpty() ? (Address)m_recipientsBcc.get(0) : null;
+    return !m_recipientsTo.isEmpty() ? m_recipientsTo.get(0) :
+            !m_recipientsCc.isEmpty() ? m_recipientsCc.get(0) :
+            !m_recipientsBcc.isEmpty() ? m_recipientsBcc.get(0) : null;
   }
 
   @Override

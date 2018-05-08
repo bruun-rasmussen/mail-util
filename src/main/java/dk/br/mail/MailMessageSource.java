@@ -1,6 +1,7 @@
 package dk.br.mail;
 
 import javax.mail.*;
+import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 /**
@@ -14,6 +15,6 @@ public interface MailMessageSource
   MimeMessage compose(Session session, boolean failsafe)
     throws MessagingException;
 
-  Address getFirstRecipient();
-  Address getBounceAddress();
+  InternetAddress getFirstRecipient();
+  InternetAddress getBounceAddress();
 }
