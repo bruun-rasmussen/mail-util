@@ -33,7 +33,7 @@ public class MailMessageParser
   private final static Pattern CSS_URL_PATTERN = Pattern.compile("(.*)url\\(([^\\)]+)\\)(.*)");
 
   public static MailMessageData[] parseMails(Node mailListNode)
-    throws IOException, AddressException
+    throws IOException
   {
     MailMessageParser parser = new MailMessageParser();
 
@@ -70,13 +70,13 @@ public class MailMessageParser
    * Parses custom XML e-mail specification into a serializable, transportable, object.
    */
   public static MailMessageData parseMail(Node mailNode)
-    throws IOException, AddressException
+    throws IOException
   {
     return new MailMessageParser().tryParseMail(mailNode);
   }
 
   private MailMessageData tryParseMail(Node mailNode)
-    throws AddressException, IOException
+    throws IOException
   {
     LOG.debug("###    parsing {}", mailNode.getNodeName());
 
@@ -136,7 +136,6 @@ public class MailMessageParser
   }
 
   private void parseAddresses(NodeList addressNodes, MailMessageData msg)
-    throws AddressException
   {
     for (int i = 0; i < addressNodes.getLength(); i++)
     {
@@ -147,11 +146,9 @@ public class MailMessageParser
   }
 
   private void addAddress(Element addressElement, MailMessageData msg)
-    throws AddressException
   {
     String type = addressElement.getNodeName();
     InternetAddress addr = getAddress(addressElement);
-    addr.validate();
     LOG.debug("{} {}", type, addr);
 
     if ("to".equals(type))
@@ -189,7 +186,14 @@ public class MailMessageParser
     Node personal = element.getElementsByTagName("personal").item(0);
     try
     {
-      return new InternetAddress(address, personal == null ? null : _text(personal));
+      InternetAddress addr = new InternetAddress(address, personal == null ? null : _text(personal));
+      try {
+        addr.validate();
+      }
+      catch (AddressException ex) {
+        throw new IllegalArgumentException("unparseable email-address " + address + " - " + ex.getMessage());
+      }
+      return addr;
     }
     catch (UnsupportedEncodingException ex)
     {
