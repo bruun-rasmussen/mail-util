@@ -7,11 +7,11 @@
 
   <groupId>dk.es.br</groupId>
   <artifactId>mail-util</artifactId>
-  <version>0.9.12-SNAPSHOT</version>
+  <version>0.9.12</version>
 
   <name>Mail Helper Classes</name>
   <description>
-    A custom XML format for constructing and 
+    A custom XML format for constructing and
     manipulating MIME-formatted e-mail
   </description>
 
@@ -92,4 +92,3 @@
   </dependencies>
 
 </project>
-
