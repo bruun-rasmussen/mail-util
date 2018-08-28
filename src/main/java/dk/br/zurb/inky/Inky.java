@@ -134,8 +134,11 @@ public class Inky
 
     Document doc = (Document)r1.getNode();
 
-    String xmlDebugFolder = System.getProperty("dk.es.xml.debug.folder");
-    if (xmlDebugFolder != null) {
+    String xmlDebugFolderPath = System.getProperty("dk.es.xml.debug.folder");
+    if (xmlDebugFolderPath != null) {
+      File xmlDebugFolder = new File(xmlDebugFolderPath);
+      if (!xmlDebugFolder.exists())
+        xmlDebugFolder.mkdirs();
       File xmlDebugFile = new File(xmlDebugFolder, "test-mail.xml");
       try {
         Transformer s = TransformerFactory.newInstance().newTransformer();
