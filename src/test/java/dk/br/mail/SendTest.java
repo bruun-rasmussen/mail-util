@@ -1,5 +1,7 @@
 package dk.br.mail;
 
+import com.github.sleroy.fakesmtp.core.ServerConfiguration;
+import com.github.sleroy.junit.mail.server.test.FakeSmtpRule;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -31,7 +33,7 @@ import org.w3c.dom.Node;
 public class SendTest
 {
   public void testThis() throws IOException, TransformerConfigurationException, TransformerException, AddressException, ParserConfigurationException, MessagingException {
-    URL htmlSrcUrl = getClass().getClassLoader().getResource("dk/br/zurb/mail/inky/br_soegeagent.html");
+    URL htmlSrcUrl = getClass().getClassLoader().getResource("dk/br/zurb/mail/br_soegeagent.html");
     Document html = htmlSouped(htmlSrcUrl);
 
     URL mailXsl = getClass().getClassLoader().getResource("dk/br/mail/send-test.xsl");
@@ -43,7 +45,7 @@ public class SendTest
     toMail.setParameter("from-name", "Litmus");
     toMail.setParameter("from-address", System.getProperty("user.name") + "@bruun-rasmussen.dk");
     toMail.setParameter("subject", "\u2709 Resultat fra din søgeagent");
-    toMail.setParameter("href-base", new URL(htmlSrcUrl, ".."));
+    toMail.setParameter("href-base", new URL(htmlSrcUrl, "."));
 
     DOMResult mailRes = new DOMResult();
     toMail.transform(new DOMSource(html), mailRes);
@@ -63,10 +65,12 @@ public class SendTest
   private static void send(MailMessageSource src) throws MessagingException {
     Properties properties = new Properties();
     properties.put("mail.smtp.host", "localhost");
+    properties.put("mail.smtp.port", "2525");
     Session session = Session.getInstance(properties);
 
     MimeMessage msg = src.compose(session, true);
     System.out.println("whoa, " + msg + " ready to send");
+
     Transport.send(msg);
   }
 

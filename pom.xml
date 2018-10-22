@@ -9,7 +9,7 @@
   <artifactId>mail-util</artifactId>
   <version>0.9.13-SNAPSHOT</version>
 
-  <name>Mail Helper Classes</name>
+  <name>E-Mail Helper Classes</name>
   <description>
     A custom XML format for constructing and
     manipulating MIME-formatted e-mail
@@ -41,7 +41,7 @@
     <dependency>
       <groupId>net.sf.cssbox</groupId>
       <artifactId>jstyleparser</artifactId>
-      <version>3.0</version>
+      <version>3.2</version>
     </dependency>
 
     <dependency>
@@ -50,6 +50,12 @@
       <version>0.1.9</version>
       <scope>test</scope>
     </dependency>
+    <!-- dependency>
+      <groupId>com.github.sleroy</groupId>
+      <artifactId>fakesmtp-junit-runner</artifactId>
+      <version>0.1.1</version>
+      <scope>test</scope>
+    </dependency -->
 
     <dependency>
       <groupId>junit</groupId>
