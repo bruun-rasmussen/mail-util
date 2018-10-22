@@ -1,7 +1,5 @@
 package dk.br.mail;
 
-import com.github.sleroy.fakesmtp.core.ServerConfiguration;
-import com.github.sleroy.junit.mail.server.test.FakeSmtpRule;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -27,7 +25,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
 /**
- *
  * @author osa
  */
 public class SendTest
