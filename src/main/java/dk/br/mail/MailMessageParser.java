@@ -563,7 +563,7 @@ public class MailMessageParser
         }
       }
 
-      return new String(out.toByteArray(), encoding);
+      return "<!DOCTYPE html>\n" + new String(out.toByteArray(), encoding);
     }
     catch (UnsupportedEncodingException ex)
     {
