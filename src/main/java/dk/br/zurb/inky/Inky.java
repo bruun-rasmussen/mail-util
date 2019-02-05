@@ -44,7 +44,7 @@ public class Inky
 
   private String responsiveOutlineCss;
   private String inlinedStylingCss;
-  private StyleSheet inliner;  
+  private StyleSheet inliner;
   private Templates inky1;
   private Templates inky2;
   private String htmlEncoding;
@@ -135,23 +135,9 @@ public class Inky
     Document doc = (Document)r1.getNode();
 
     String xmlDebugFolderPath = System.getProperty("dk.es.xml.debug.folder");
-    if (xmlDebugFolderPath != null) {
-      File xmlDebugFolder = new File(xmlDebugFolderPath);
-      if (!xmlDebugFolder.exists())
-        xmlDebugFolder.mkdirs();
-      File xmlDebugFile = new File(xmlDebugFolder, "test-mail.xml");
-      try {
-        Transformer s = TransformerFactory.newInstance().newTransformer();
-        s.setOutputProperty(OutputKeys.METHOD, "xml");
-        s.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        s.setOutputProperty(OutputKeys.INDENT, "yes");
-        s.transform(new DOMSource(doc), new StreamResult(xmlDebugFile));
-      }
-      catch (Exception ex) {
-        LOG.error("{}: failed to save debug info", xmlDebugFile.getAbsolutePath(), ex);
-      }
-    }
-    
+    if (xmlDebugFolderPath != null)
+      saveXmlFile(doc, new File(xmlDebugFolderPath));
+
     if (useCssInliner) {
       StyleMap styles = new Analyzer(inliner).evaluateDOM(doc, "screen", false);
       inlineCss(doc, styles);
@@ -165,6 +151,26 @@ public class Inky
     xf2.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
 
     xf2.transform(s2, res);
+  }
+
+  private static void saveXmlFile(Document doc, File xmlDebugFolder)
+  {
+    if (!xmlDebugFolder.exists())
+      xmlDebugFolder.mkdirs();
+
+    File xmlDebugFile = new File(xmlDebugFolder, "test-mail.xml");
+    try
+    {
+      Transformer s = TransformerFactory.newInstance().newTransformer();
+      s.setOutputProperty(OutputKeys.METHOD, "xml");
+      s.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+      s.setOutputProperty(OutputKeys.INDENT, "yes");
+      s.transform(new DOMSource(doc), new StreamResult(xmlDebugFile));
+    }
+    catch (Exception ex)
+    {
+      LOG.error("{}: failed to save debug info - {}", xmlDebugFile.getAbsolutePath(), ex.getMessage());
+    }
   }
 
   private void inlineCss(Node n, StyleMap sm)
