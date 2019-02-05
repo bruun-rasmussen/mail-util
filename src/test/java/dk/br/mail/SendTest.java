@@ -1,5 +1,8 @@
 package dk.br.mail;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -7,7 +10,6 @@ import java.net.URLConnection;
 import java.util.Properties;
 import javax.mail.MessagingException;
 import javax.mail.Session;
-import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.MimeMessage;
 import javax.xml.parsers.ParserConfigurationException;
@@ -59,16 +61,16 @@ public class SendTest
     send(mailData);
   }
 
-  private static void send(MailMessageSource src) throws MessagingException {
-    Properties properties = new Properties();
-    properties.put("mail.smtp.host", "localhost");
-    properties.put("mail.smtp.port", "2525");
-    Session session = Session.getInstance(properties);
-
+  private static void send(MailMessageSource src) throws MessagingException, FileNotFoundException, IOException {
+    Session session = Session.getInstance(new Properties());
     MimeMessage msg = src.compose(session, true);
-    System.out.println("whoa, " + msg + " ready to send");
-
-    Transport.send(msg);
+    
+    File mailtest_eml = new File("mailtest.eml");
+    FileOutputStream os = new FileOutputStream(mailtest_eml);
+    msg.writeTo(os);
+    os.close();
+    
+    System.out.println("wrote " + mailtest_eml.getAbsolutePath());    
   }
 
   private static Document htmlSouped(URL srcUrl) throws IOException
