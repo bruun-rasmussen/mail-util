@@ -53,11 +53,6 @@ public abstract class MailPartData implements MailPartSource, Serializable
     return new BinaryData(contentType, name, content);
   }
 
-  @Deprecated
-  public static MailPartData from(String contentType, String contentEncoding, String name, byte content[]) {
-    return from(contentType, name, content);
-  }
-
   private static BinaryData _read(URL url)
     throws IOException
   {
