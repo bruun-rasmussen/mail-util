@@ -1,6 +1,9 @@
 package dk.br.mail;
 
-import java.io.*;
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import javax.activation.DataHandler;
 import javax.mail.*;
@@ -9,14 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A serializable, transportable representation of an e-mail message. The <em>transportable</em> 
+ * A serializable, transportable representation of an e-mail message. The <em>transportable</em>
  * part means that instances will never include references to "local" files or directories.
  *
  * @author     TietoEnator Consulting
  * @since      21. november 2003
  */
 public final class MailMessageData
-     implements java.io.Serializable, MailMessageSource
+     implements Serializable, MailMessageSource
 {
   private final static Logger LOG = LoggerFactory.getLogger(MailMessageData.class);
 
@@ -173,8 +176,8 @@ public final class MailMessageData
    * Produces the MIME message.
    * @param failsafe    if set, will produce and return an incomplete message even if
    *                    some related resources cannot be retrieved, e.g. non-existing
-   *                    images referenced in HTML &lt;img href="http://...."&gt; 
-   *                    if not set, this will cause 
+   *                    images referenced in HTML &lt;img href="http://...."&gt;
+   *                    if not set, this will cause
    */
   @Override
   public MimeMessage compose(Session session, boolean failsafe)
@@ -268,9 +271,9 @@ public final class MailMessageData
       }
       catch (MessagingException ex)
       {
-        if (!failsafe) 
+        if (!failsafe)
           throw ex;
-        
+
         LOG.error("failed to compose attachment " + src, ex);
 
         // Giving up. Attach error message instead:

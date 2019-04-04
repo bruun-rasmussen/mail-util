@@ -124,7 +124,7 @@ public class MailMessageParser
       else if ("attachment".equals(propertyName))
       {
         String src = ((Element)propertyNode).getAttribute("src");
-        msg.attach(MailPartSource.remote(new URL(src)));
+        msg.attach(MailPartData.remote(new URL(src)));
       }
       else
       {
@@ -201,13 +201,13 @@ public class MailMessageParser
     }
   }
 
-
   private class HtmlPartParser
   {
     boolean seenInky;
     URL m_baseHref;
     Map<String,String> m_resources = new HashMap<String,String>();
     Map<String,MailPartSource> m_resourceContent = new HashMap<String,MailPartSource>();
+    Stack<Map<String,String>> m_tags = new Stack<Map<String,String>>();
 
     private void digest(NodeList bodyNodes, MailMessageData msg)
       throws IOException
@@ -241,8 +241,18 @@ public class MailMessageParser
     private void digestHtmlNodeList(NodeList children)
       throws IOException
     {
+      m_tags.push(new HashMap<String, String>());
       for (int i = 0; i < children.getLength(); i++)
         digestHtmlNode(children.item(i));
+      m_tags.pop().clear();
+    }
+
+    private Map<String,String> getTags() {
+      Map<String,String> tags = new HashMap<String,String>(m_tags.peek());
+      for (Map<String,String> t : m_tags)
+        for (Map.Entry<String, String> s : t.entrySet())
+          tags.put(s.getKey(), s.getValue());
+      return tags;
     }
 
     private void digestHtmlAttributes(NamedNodeMap children)
@@ -285,6 +295,11 @@ public class MailMessageParser
       {
         digestStyleAttribute((Attr)node);
       }
+      else if ("href".equalsIgnoreCase(nodeName) && nodeType == Node.ATTRIBUTE_NODE)
+      {
+        String address = ((Attr)node).getValue();
+        LOG.info("href=\"{}\" (tags: {})", address, getTags());
+      }
       else if (("body".equalsIgnoreCase(nodeName)
           || "table".equalsIgnoreCase(nodeName)
           || "tr".equalsIgnoreCase(nodeName)
@@ -307,6 +322,13 @@ public class MailMessageParser
       else if ("include".equalsIgnoreCase(nodeName))
       {
         includeResource(node);
+      }
+      else if ("tag".equalsIgnoreCase(nodeName))
+      {
+        String name = ((Element)node).getAttribute("name");
+        String value = ((Element)node).getAttribute("value");
+        String was = m_tags.peek().put(name, value);
+        LOG.info("TAG {}=\"{}\" (was {})", name, value, was);
       }
       else if ("binary-content".equalsIgnoreCase(nodeName))
       {
@@ -392,12 +414,12 @@ public class MailMessageParser
             String md5 = ((Element)child).getAttribute("md5");
             String contentType = ((Element)child).getAttribute("type");
             urlText = "mem:/" + md5;
-            MailPartSource binaryContent = (MailPartSource)m_resourceContent.get(urlText);
+            MailPartSource binaryContent = m_resourceContent.get(urlText);
             if (binaryContent == null)
             {
               String binaryContentBase64 = _text(child);
               byte bytes[] = Base64.decodeBase64(binaryContentBase64.getBytes());
-              binaryContent = MailPartSource.from(contentType, md5, bytes);
+              binaryContent = MailPartData.from(contentType, md5, bytes);
               m_resourceContent.put(urlText, binaryContent);
             }
             break;
@@ -487,15 +509,15 @@ public class MailMessageParser
       else if (ref.startsWith("res:"))
       {
         URL url = getClass().getClassLoader().getResource(ref.substring("res:".length()));
-        return MailPartSource.local(url);
+        return MailPartData.local(url);
       }
       else if (ref.startsWith("file:") || ref.startsWith("jar:"))
       {
-        return MailPartSource.local(new URL(ref));
+        return MailPartData.local(new URL(ref));
       }
       else if (ref.startsWith("http:") || ref.startsWith("https:"))
       {
-        return MailPartSource.remote(new URL(ref));
+        return MailPartData.remote(new URL(ref));
       }
       else
       {
@@ -504,7 +526,7 @@ public class MailMessageParser
         URL src = new URL(m_baseHref, ref);
         LOG.debug("\"{}\" relative to \"{}\":\n\t\"{}\"", URI.create(ref), m_baseHref, src);
         try {
-          return MailPartSource.remote(src);
+          return MailPartData.remote(src);
         }
         catch (RuntimeException ex) {
           LOG.error("{}: {}", src, ex.getMessage());

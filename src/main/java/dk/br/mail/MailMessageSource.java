@@ -1,6 +1,7 @@
 package dk.br.mail;
 
-import javax.mail.*;
+import javax.mail.MessagingException;
+import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
