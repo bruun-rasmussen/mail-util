@@ -172,6 +172,11 @@ public final class MailMessageData
     m_attachments.add(attachment);
   }
 
+  public void attach(String contentType, String name, byte content[])
+  {
+    attach(MailPartData.from(contentType, name, content));
+  }
+
   /**
    * Produces the MIME message.
    * @param failsafe    if set, will produce and return an incomplete message even if
