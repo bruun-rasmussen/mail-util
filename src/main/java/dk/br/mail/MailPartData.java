@@ -48,7 +48,20 @@ public abstract class MailPartData implements MailPartSource, Serializable
   public static MailPartData local(URL url) throws IOException {
     return _read(url);
   }
-
+  
+  public static MailPartSource wrap(final DataSource src) {
+    if (!(src instanceof Serializable))
+      throw new IllegalArgumentException("must be serializable");
+    
+    return new MailPartData() {
+      @Override
+      protected DataSource _source() throws MessagingException
+      {
+        return src;
+      }
+    };
+  }
+  
   public static MailPartData from(String contentType, String name, byte content[]) {
     return new BinaryData(contentType, name, content);
   }

@@ -6,6 +6,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 import javax.activation.DataHandler;
+import javax.activation.DataSource;
 import javax.mail.*;
 import javax.mail.internet.*;
 import org.slf4j.Logger;
@@ -177,6 +178,11 @@ public final class MailMessageData
     attach(MailPartData.from(contentType, name, content));
   }
 
+  public void attach(DataSource ds)
+  {
+    attach(MailPartData.wrap(ds));
+  }
+
   /**
    * Produces the MIME message.
    * @param failsafe    if set, will produce and return an incomplete message even if
@@ -279,7 +285,7 @@ public final class MailMessageData
         if (!failsafe)
           throw ex;
 
-        LOG.error("failed to compose attachment " + src, ex);
+        LOG.error("failed to compose attachment {}", src, ex);
 
         // Giving up. Attach error message instead:
         StringWriter w = new StringWriter();
