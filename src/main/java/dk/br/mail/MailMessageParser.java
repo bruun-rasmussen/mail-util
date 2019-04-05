@@ -1,10 +1,12 @@
 package dk.br.mail;
 
 import dk.br.zurb.inky.Inky;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.regex.*;
+import javax.imageio.ImageIO;
 import javax.mail.internet.*;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
@@ -24,10 +26,12 @@ public class MailMessageParser
   private final static Logger LOG = LoggerFactory.getLogger(MailMessageParser.class);
 
   private final boolean useCssInliner;
+  private final boolean useBase64Embedding;
 
   private MailMessageParser()
   {
     useCssInliner = "1|yes|true".contains(System.getProperty("dk.br.mail.inline-css", "false"));
+    useBase64Embedding = "1|yes|true".contains(System.getProperty("dk.br.mail.base64-embed", "false"));
   }
 
   private final static Pattern CSS_URL_PATTERN = Pattern.compile("(.*)url\\(([^\\)]+)\\)(.*)");
@@ -432,13 +436,50 @@ public class MailMessageParser
 
       String embed = elem.getAttribute("embed");
       if (!"false".equals(embed)) {
-        // Embed resource as related MIME part. Replace the URL value by
-        // intra-mail 'cid:'-... reference:
-        String cidRef = cidReference(urlText);
-        elem.setAttribute(resourceAttribute, cidRef);
+        String reference;
+        if (useBase64Embedding) {
+          // use base64 encoded image strings directly in src
+          reference = base64RepresentationOf(fromSrc(urlText));
+        } else {
+          // Embed resource as related MIME part. Replace the URL value by
+          // intra-mail 'cid:'-... reference:
+          reference = cidReference(urlText);
+        }
+        elem.setAttribute(resourceAttribute, reference);
       }
 
       elem.removeAttribute("embed");
+    }
+
+    private URL fromSrc(String src) throws MalformedURLException {
+      if (src.startsWith("https://") | src.startsWith("http://")) {
+          return new URL(src);
+      } else if (src.startsWith("res:")) {
+          return getClass().getClassLoader().getResource(src.substring("res:".length()));
+      } else {
+        return getClass().getClassLoader().getResource(src);
+      }
+    }
+
+    private String base64RepresentationOf(URL url) throws IOException {
+      StringBuilder sb = new StringBuilder();
+      String mimetype;
+      int magicNumber = new DataInputStream(url.openStream()).readInt();
+      if (magicNumber == 0x49492A00 | magicNumber == 0x4D4D002A | magicNumber >>> 16 == 0x424D)
+        throw new IOException("Can't embed image: TIFF and BMP not supported in email");
+      if (magicNumber >>> 16 == 0xFFD8)
+        mimetype = "jpg";
+      else if (magicNumber == 0x89504E47)
+        mimetype = "png";
+      else
+        throw new IOException("Can't embed image: Unrecognized mimetype");
+
+      BufferedImage image = ImageIO.read(url);
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ImageIO.write(image, mimetype, baos);
+
+      sb.append("data:image/").append(mimetype).append(";base64,").append(Base64.encodeBase64String(baos.toByteArray()));
+      return sb.toString();
     }
 
     private String cidReference(String urlText)

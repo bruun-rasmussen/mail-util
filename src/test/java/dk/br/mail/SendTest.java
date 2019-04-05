@@ -1,7 +1,6 @@
 package dk.br.mail;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,17 +9,17 @@ import java.net.URLConnection;
 import java.util.Properties;
 import javax.mail.MessagingException;
 import javax.mail.Session;
-import javax.mail.internet.AddressException;
 import javax.mail.internet.MimeMessage;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+
+import junit.framework.TestCase;
+import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.W3CDom;
 import org.w3c.dom.Document;
@@ -29,10 +28,9 @@ import org.w3c.dom.Node;
 /**
  * @author osa
  */
-public class SendTest
+public class SendTest extends TestCase
 {
-  public void testThis() throws IOException, TransformerConfigurationException, TransformerException, AddressException, ParserConfigurationException, MessagingException {
-    URL htmlSrcUrl = getClass().getClassLoader().getResource("dk/br/zurb/mail/br_soegeagent.html");
+  public void testThis() throws IOException, TransformerException, MessagingException {
     Document html = htmlSouped(htmlSrcUrl);
 
     URL mailXsl = getClass().getClassLoader().getResource("dk/br/mail/send-test.xsl");
@@ -40,7 +38,7 @@ public class SendTest
 
     Transformer toMail = xf.newTransformer(new StreamSource(mailXsl.openStream()));
     toMail.setParameter("to-name", "Litmus");
-    toMail.setParameter("to-address", "osa@bruun-rasmussen.dk"); // "test@litmus.com");
+    toMail.setParameter("to-address", System.getProperty("user.name") + "@bruun-rasmussen.dk"); // "test@litmus.com");
     toMail.setParameter("from-name", "Litmus");
     toMail.setParameter("from-address", System.getProperty("user.name") + "@bruun-rasmussen.dk");
     toMail.setParameter("subject", "\u2709 Resultat fra din søgeagent");
@@ -55,13 +53,14 @@ public class SendTest
     toXml.setOutputProperty("indent", "yes");
     toXml.transform(new DOMSource(email), new StreamResult(System.out));
 
+    System.setProperty("dk.br.mail.base64-embed", "true");
     MailMessageData mailData = MailMessageParser.parseMail(email.getFirstChild()); // <- da fuk?!
     mailData.setCustomHeader("X-SentFromClass", getClass().getName());
 
     send(mailData);
   }
 
-  private static void send(MailMessageSource src) throws MessagingException, FileNotFoundException, IOException {
+  private static void send(MailMessageSource src) throws MessagingException, IOException {
     Session session = Session.getInstance(new Properties());
     MimeMessage msg = src.compose(session, true);
     
