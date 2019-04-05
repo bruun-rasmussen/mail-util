@@ -30,7 +30,7 @@ import org.w3c.dom.Node;
 public class SendTest extends TestCase
 {
   public void testThis() throws IOException, TransformerException, MessagingException {
-    URL htmlSrcUrl = getClass().getClassLoader().getResource("dk/br/zurb/mail/inky/br_soegeagent.html");
+    URL htmlSrcUrl = getClass().getClassLoader().getResource("dk/br/zurb/mail/br_soegeagent.html");
     Document html = htmlSouped(htmlSrcUrl);
 
     URL mailXsl = getClass().getClassLoader().getResource("dk/br/mail/send-test.xsl");
