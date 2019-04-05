@@ -19,7 +19,6 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import junit.framework.TestCase;
-import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.W3CDom;
 import org.w3c.dom.Document;
@@ -31,6 +30,7 @@ import org.w3c.dom.Node;
 public class SendTest extends TestCase
 {
   public void testThis() throws IOException, TransformerException, MessagingException {
+    URL htmlSrcUrl = getClass().getClassLoader().getResource("dk/br/zurb/mail/inky/br_soegeagent.html");
     Document html = htmlSouped(htmlSrcUrl);
 
     URL mailXsl = getClass().getClassLoader().getResource("dk/br/mail/send-test.xsl");
