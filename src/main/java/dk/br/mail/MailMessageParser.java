@@ -464,15 +464,20 @@ public class MailMessageParser
     private String base64RepresentationOf(URL url) throws IOException {
       StringBuilder sb = new StringBuilder();
       String mimetype;
-      int magicNumber = new DataInputStream(url.openStream()).readInt();
-      if (magicNumber == 0x49492A00 | magicNumber == 0x4D4D002A | magicNumber >>> 16 == 0x424D)
-        throw new IOException("Can't embed image: TIFF and BMP not supported in email");
-      if (magicNumber >>> 16 == 0xFFD8)
-        mimetype = "jpg";
-      else if (magicNumber == 0x89504E47)
-        mimetype = "png";
-      else
-        throw new IOException("Can't embed image: Unrecognized mimetype");
+      DataInputStream dis = new DataInputStream(url.openStream());
+      try {
+        int magicNumber = dis.readInt();
+        if (magicNumber == 0x49492A00 | magicNumber == 0x4D4D002A | magicNumber >>> 16 == 0x424D)
+          throw new IOException("Can't embed image: TIFF and BMP not supported in email");
+        if (magicNumber >>> 16 == 0xFFD8)
+          mimetype = "jpg";
+        else if (magicNumber == 0x89504E47)
+          mimetype = "png";
+        else
+          throw new IOException("Can't embed image: Unrecognized mimetype");
+      } finally {
+        dis.close();
+      }
 
       BufferedImage image = ImageIO.read(url);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
