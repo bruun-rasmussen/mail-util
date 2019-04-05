@@ -1,17 +1,16 @@
 package dk.br.mail;
 
 import dk.br.zurb.inky.Inky;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.regex.*;
-import javax.imageio.ImageIO;
 import javax.mail.internet.*;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -464,27 +463,20 @@ public class MailMessageParser
 
     private String base64RepresentationOf(URL url) throws IOException {
       StringBuilder sb = new StringBuilder();
-      String mimetype;
-      DataInputStream dis = new DataInputStream(url.openStream());
+      URLConnection c = url.openConnection();
+      c.connect();
+      String mimetype = c.getContentType();
+      InputStream is = null;
       try {
-        int magicNumber = dis.readInt();
-        if (magicNumber == 0x49492A00 | magicNumber == 0x4D4D002A | magicNumber >>> 16 == 0x424D)
-          throw new IOException("Can't embed image: TIFF and BMP not supported in email");
-        if (magicNumber >>> 16 == 0xFFD8)
-          mimetype = "jpg";
-        else if (magicNumber == 0x89504E47)
-          mimetype = "png";
-        else
-          throw new IOException("Can't embed image: Unrecognized mimetype");
+        is = c.getInputStream();
+        is = url.openStream();
+        sb.append("data:image/").append(mimetype).append(";base64,").append(Base64.encodeBase64String(IOUtils.toByteArray(is)));
+      } catch(FileNotFoundException fnfe) {
+        LOG.error("No file at: {}" + url);
       } finally {
-        dis.close();
+        if (is != null)
+          is.close();
       }
-
-      BufferedImage image = ImageIO.read(url);
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      ImageIO.write(image, mimetype, baos);
-
-      sb.append("data:image/").append(mimetype).append(";base64,").append(Base64.encodeBase64String(baos.toByteArray()));
       return sb.toString();
     }
 
