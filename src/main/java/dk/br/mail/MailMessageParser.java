@@ -438,7 +438,7 @@ public class MailMessageParser
         String reference;
         if (useBase64Embedding) {
           // use base64 encoded image strings directly in src
-          reference = base64RepresentationOf(fromSrc(urlText));
+          reference = StringUtils.startsWith(urlText, "data:") ? urlText : base64RepresentationOf(fromSrc(urlText));
         } else {
           // Embed resource as related MIME part. Replace the URL value by
           // intra-mail 'cid:'-... reference:
