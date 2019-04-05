@@ -452,12 +452,13 @@ public class MailMessageParser
     }
 
     private URL fromSrc(String src) throws MalformedURLException {
-      if (src.startsWith("https://") | src.startsWith("http://")) {
+      if (src.startsWith("https://") | src.startsWith("http://") | src.startsWith("file://")) {
           return new URL(src);
       } else if (src.startsWith("res:")) {
-          return getClass().getClassLoader().getResource(src.substring("res:".length()));
+        return getClass().getClassLoader().getResource(src.substring("res:".length()));
       } else {
-        return getClass().getClassLoader().getResource(src);
+        // try relative url
+        return new URL(m_baseHref, src);
       }
     }
 
