@@ -461,16 +461,21 @@ public class MailMessageParser
       }
     }
 
+    /**
+     * Data URI encodes a target
+     * @param url
+     * @return
+     * @throws IOException
+     */
     private String base64RepresentationOf(URL url) throws IOException {
       StringBuilder sb = new StringBuilder();
       URLConnection c = url.openConnection();
       c.connect();
-      String mimetype = c.getContentType();
       InputStream is = null;
       try {
         is = c.getInputStream();
         is = url.openStream();
-        sb.append("data:image/").append(mimetype).append(";base64,").append(Base64.encodeBase64String(IOUtils.toByteArray(is)));
+        sb.append("data:").append(c.getContentType()).append(";base64,").append(Base64.encodeBase64String(IOUtils.toByteArray(is)));
       } catch(FileNotFoundException fnfe) {
         LOG.error("No file at: {}" + url);
       } finally {
