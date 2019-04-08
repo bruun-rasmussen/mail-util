@@ -441,7 +441,11 @@ public class MailMessageParser
 
       String embed = elem.getAttribute("embed");
       if ("inline".equals(embed)) {
-        // Embed resource inline as 'data:<type>;base64,<data>' encoded URL:
+        // Embed resource inline as 'data:<type>;base64,<data>' encoded URL.
+        // This will not work on newer GMail, Outlook, and many other webmails, 
+        // so don't use it (even if believed to offer a work-around for a rendering 
+        // bug in Apple Mail.)
+        // See https://blog.mailtrap.io/2018/11/02/embedding-images-in-html-email-have-the-rules-changed/
         String inlineBase64 = inlineData(urlText);
         elem.setAttribute(resourceAttribute, inlineBase64);
       }

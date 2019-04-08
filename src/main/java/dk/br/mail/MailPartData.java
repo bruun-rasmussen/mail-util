@@ -85,6 +85,12 @@ public abstract class MailPartData implements MailPartSource, Serializable
   }
 
 
+  public static MailPartData from(String href) 
+        throws IOException 
+  {
+    return from(href, null);
+  }
+
   public static MailPartData from(String href, URL baseHref) 
         throws IOException 
   {
@@ -171,7 +177,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
   }
   
   /*
-   *  A lazy container for a URL data handler. URL is serializable, DataHander is not.
+   *  A lazy container for a URL data handler. URL is serializable, DataHandler is not.
    */
   private static class RemoteHtmlResource extends MailPartData
   {
