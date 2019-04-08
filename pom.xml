@@ -52,7 +52,7 @@
     <dependency>
       <groupId>dk.br</groupId>
       <artifactId>zurb-email</artifactId>
-      <version>0.1.9</version>
+      <version>0.1.10-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
     <!-- dependency>

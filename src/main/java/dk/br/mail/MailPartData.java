@@ -7,13 +7,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.mail.MessagingException;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +39,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
    * Return a lazy-loading part source wrapping a URL for the target resource to 
    * be fetched and embedded during the mail composition. 
    */
-  public static MailPartData remote(URL url) {
+  private static MailPartData remote(URL url) {
     return new RemoteHtmlResource(url);
   }
   
@@ -45,7 +48,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
    * embedded during mail composition.
    * @throws  IOException    if the content cannot be fetched
    */
-  public static MailPartData local(URL url) throws IOException {
+  private static MailPartData local(URL url) throws IOException {
     return _read(url);
   }
   
@@ -66,6 +69,60 @@ public abstract class MailPartData implements MailPartSource, Serializable
     return new BinaryData(contentType, name, content);
   }
 
+
+  private final static Pattern BASE64_INLINE_URL = Pattern.compile("data:([^;]*)(;[^,]*)?,(.*)");
+  
+  private static MailPartData inline(String dataUrl) {
+    Matcher m = BASE64_INLINE_URL.matcher(dataUrl);
+    if (!m.matches())
+      throw new IllegalArgumentException("'" + dataUrl + "': unrecognized data: URL format");
+    String contentType = m.group(1);
+    boolean decodeBase64 = ";base64".equals(m.group(2));
+    String data = m.group(3);
+    byte content[] = decodeBase64 ? Base64.decodeBase64(data) : data.getBytes();
+    LOG.info("[{}] {} byte(s)", contentType, content.length);
+    return new BinaryData(contentType, "inline-data", content);
+  }
+
+
+  public static MailPartData from(String href, URL baseHref) 
+        throws IOException 
+  {
+    if (href.startsWith("res:"))
+    {
+      URL url = MailPartData.class.getClassLoader().getResource(href.substring("res:".length()));
+      return local(url);
+    }
+    else if (href.startsWith("file:") || href.startsWith("jar:"))
+    {
+      return local(new URL(href));
+    }
+    else if (href.startsWith("http:") || href.startsWith("https:"))
+    {
+      return remote(new URL(href));
+    }
+    else if (href.startsWith("data:"))
+    {
+      return inline(href);
+    }
+    else
+    {
+      if (baseHref == null)
+        throw new IOException("cannot resolve '"+href+"' - no <base href=\"...\"> present");
+      URL src = new URL(baseHref, href);
+      try {
+        LOG.debug("\"{}\" relative to \"{}\":\n\t\"{}\"", URI.create(href), baseHref, src);
+        return remote(src);
+      }
+      catch (RuntimeException ex) {
+        LOG.error("{}: {}", src, ex.getMessage());
+        throw ex;
+      }
+    }
+  }
+
+
+  
   private static BinaryData _read(URL url)
     throws IOException
   {

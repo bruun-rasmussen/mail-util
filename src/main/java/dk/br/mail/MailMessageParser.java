@@ -4,7 +4,10 @@ import dk.br.zurb.inky.Inky;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.activation.DataHandler;
+import javax.mail.MessagingException;
 import javax.mail.internet.*;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
@@ -25,12 +28,10 @@ public class MailMessageParser
   private final static Logger LOG = LoggerFactory.getLogger(MailMessageParser.class);
 
   private final boolean useCssInliner;
-  private final boolean useBase64Embedding;
 
   private MailMessageParser()
   {
     useCssInliner = "1|yes|true".contains(System.getProperty("dk.br.mail.inline-css", "false"));
-    useBase64Embedding = "1|yes|true".contains(System.getProperty("dk.br.mail.base64-embed", "false"));
   }
 
   private final static Pattern CSS_URL_PATTERN = Pattern.compile("(.*)url\\(([^\\)]+)\\)(.*)");
@@ -127,7 +128,7 @@ public class MailMessageParser
       else if ("attachment".equals(propertyName))
       {
         String src = ((Element)propertyNode).getAttribute("src");
-        msg.attach(MailPartData.remote(new URL(src)));
+        msg.attach(MailPartData.from(src, null));
       }
       else
       {
@@ -208,8 +209,12 @@ public class MailMessageParser
   {
     boolean seenInky;
     URL m_baseHref;
-    Map<String,String> m_resources = new HashMap<String,String>();
-    Map<String,MailPartSource> m_resourceContent = new HashMap<String,MailPartSource>();
+
+    // <Source URL> -> <Part-ID> map for all resources embedded as Related MIME parts
+    final Map<String,String> m_resourcePartIds = new HashMap<String,String>();
+    // <Source URL> -> <Binary Data> map for same
+    final Map<String,MailPartSource> m_resourceContent = new HashMap<String,MailPartSource>();
+
     Stack<Map<String,String>> m_tags = new Stack<Map<String,String>>();
 
     private void digest(NodeList bodyNodes, MailMessageData msg)
@@ -217,7 +222,7 @@ public class MailMessageParser
     {
       // Initialize:
       seenInky = false;
-      m_resources.clear();
+      m_resourcePartIds.clear();
       m_resourceContent.clear();
 
       // Traverse HTML DOM, extracting and dereferencing external resources (style sheets,
@@ -231,10 +236,11 @@ public class MailMessageParser
       // Attach the dereferenced resources to be included as "related" MIME parts in the
       // final result:
       LOG.debug("HTML BODY: {} characters", bodyText.length());
-      for (Map.Entry<String,String> e : m_resources.entrySet())
+      for (Map.Entry<String,String> e : m_resourcePartIds.entrySet())
       {
         String ref = e.getKey();
         String partId = e.getValue();
+        LOG.info("Attach related part {} from {}", partId, ref);
 
         MailPartSource partSource = partFromRef(ref);
         msg.addRelatedBodyPart(partId, partSource);
@@ -434,66 +440,55 @@ public class MailMessageParser
         return;
 
       String embed = elem.getAttribute("embed");
-      if (!"false".equals(embed)) {
-        String reference;
-        if (useBase64Embedding) {
-          // use base64 encoded image strings directly in src
-          reference = StringUtils.startsWith(urlText, "data:") ? urlText : base64RepresentationOf(fromSrc(urlText));
-        } else {
-          // Embed resource as related MIME part. Replace the URL value by
-          // intra-mail 'cid:'-... reference:
-          reference = cidReference(urlText);
-        }
-        elem.setAttribute(resourceAttribute, reference);
+      if ("inline".equals(embed)) {
+        // Embed resource inline as 'data:<type>;base64,<data>' encoded URL:
+        String inlineBase64 = inlineData(urlText);
+        elem.setAttribute(resourceAttribute, inlineBase64);
       }
+      else if (!"false".equals(embed)) {
+        // Embed resource as related MIME part. Replace the URL value by
+        // intra-mail 'cid:'-... reference:
+        String cidRef = cidReference(urlText);
+        elem.setAttribute(resourceAttribute, cidRef);
+      }
+      // Otherwise, just leave resource URL as is
 
       elem.removeAttribute("embed");
     }
 
-    private URL fromSrc(String src) throws MalformedURLException {
-      if (src.startsWith("https://") | src.startsWith("http://") | src.startsWith("file://")) {
-          return new URL(src);
-      } else if (src.startsWith("res:")) {
-        return getClass().getClassLoader().getResource(src.substring("res:".length()));
-      } else {
-        // try relative url
-        return new URL(m_baseHref, src);
-      }
-    }
-
-    /**
-     * Data URI encodes a target
-     * @param url
-     * @return
-     * @throws IOException
-     */
-    private String base64RepresentationOf(URL url) throws IOException {
-      StringBuilder sb = new StringBuilder();
-      URLConnection c = url.openConnection();
-      c.connect();
-      InputStream is = null;
+    private String inlineData(String urlText) throws IOException
+    {
+      MailPartSource src = partFromRef(urlText);
+      DataHandler data;
       try {
-        is = c.getInputStream();
-        is = url.openStream();
-        sb.append("data:").append(c.getContentType()).append(";base64,").append(Base64.encodeBase64String(IOUtils.toByteArray(is)));
-      } catch(FileNotFoundException fnfe) {
-        LOG.error("No file at: {}" + url);
-      } finally {
-        if (is != null)
-          is.close();
+        data = src.getDataHandler();
       }
-      return sb.toString();
+      catch (MessagingException ex) {
+        throw new IOException(urlText + " failed to load", ex);
+      }
+    //String name = data.getName();
+      String contentType = data.getContentType();
+      byte content[];
+      InputStream is = data.getInputStream();
+      try
+      {
+        content = IOUtils.toByteArray(is);
+      }
+      finally {
+        is.close();
+      }
+      return "data:" + contentType + ";base64," + Base64.encodeBase64String(content);
     }
 
     private String cidReference(String urlText)
     {
       // Store the resource content away in m_resources for attachment later, and
       // replace the URL-attribute by an appropriate intra-mail reference:
-      String partId = m_resources.get(urlText);
+      String partId = m_resourcePartIds.get(urlText);
       if (partId == null)
       {
-        partId = "part." + (m_resources.size() + 1) + "." + System.currentTimeMillis() + "@mail";
-        m_resources.put(urlText, partId);
+        partId = "part." + (m_resourcePartIds.size() + 1) + "." + System.currentTimeMillis() + "@mail";
+        m_resourcePartIds.put(urlText, partId);
         LOG.debug("{}: resource embedded as MIME part <{}>", urlText, partId);
       }
       return "cid:" + partId;
@@ -532,51 +527,13 @@ public class MailMessageParser
       }
     }
 
-    private String embedResource(String md5, byte content[])
-    {
-      String key = "local:" + md5;
-      String partId = m_resources.get(key);
-      if (partId == null)
-      {
-        partId = "part." + (m_resources.size() + 1) + "." + System.currentTimeMillis() + "@mail";
-        m_resources.put(key, partId);
-        LOG.debug("{}: resource embedded as MIME part <{}>", key, partId);
-      }
-      return "cid:" + partId;
-    }
-
     private MailPartSource partFromRef(String ref) throws IOException {
-      if (ref.startsWith("mem:"))
-      {
-        return m_resourceContent.get(ref);
+      MailPartSource part = m_resourceContent.get(ref);
+      if (part == null) {
+        part = MailPartData.from(ref, m_baseHref);
+        m_resourceContent.put(ref, part);
       }
-      else if (ref.startsWith("res:"))
-      {
-        URL url = getClass().getClassLoader().getResource(ref.substring("res:".length()));
-        return MailPartData.local(url);
-      }
-      else if (ref.startsWith("file:") || ref.startsWith("jar:"))
-      {
-        return MailPartData.local(new URL(ref));
-      }
-      else if (ref.startsWith("http:") || ref.startsWith("https:"))
-      {
-        return MailPartData.remote(new URL(ref));
-      }
-      else
-      {
-        if (m_baseHref == null)
-          throw new IOException("cannot resolve '"+ref+"' - no <base href=\"...\"> present");
-        URL src = new URL(m_baseHref, ref);
-        LOG.debug("\"{}\" relative to \"{}\":\n\t\"{}\"", URI.create(ref), m_baseHref, src);
-        try {
-          return MailPartData.remote(src);
-        }
-        catch (RuntimeException ex) {
-          LOG.error("{}: {}", src, ex.getMessage());
-          throw ex;
-        }
-      }
+      return part;
     }
   }
 
