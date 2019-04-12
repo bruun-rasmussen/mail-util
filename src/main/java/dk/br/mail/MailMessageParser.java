@@ -103,7 +103,7 @@ public class MailMessageParser
       else if ("plain-body".equals(propertyName))
       {
         String body = _text(propertyNode);
-        LOG.info("text/plain body: {} characters", body.length());
+        LOG.debug("text/plain body: {} characters", body.length());
         msg.setPlainBody(body);
       }
       else if ("html-body".equals(propertyName))
@@ -240,7 +240,7 @@ public class MailMessageParser
       {
         String ref = e.getKey();
         String partId = e.getValue();
-        LOG.info("Attach related part {} from {}", partId, ref);
+        LOG.debug("Attach related part {} from {}", partId, ref);
 
         MailPartSource partSource = partFromRef(ref);
         msg.addRelatedBodyPart(partId, partSource);
@@ -307,7 +307,7 @@ public class MailMessageParser
       else if ("href".equalsIgnoreCase(nodeName) && nodeType == Node.ATTRIBUTE_NODE)
       {
         String address = ((Attr)node).getValue();
-        LOG.info("href=\"{}\" (tags: {})", address, getTags());
+        LOG.debug("href=\"{}\" (tags: {})", address, getTags());
       }
       else if (("body".equalsIgnoreCase(nodeName)
           || "table".equalsIgnoreCase(nodeName)

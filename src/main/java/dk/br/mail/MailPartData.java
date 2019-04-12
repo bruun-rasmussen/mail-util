@@ -80,7 +80,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
     boolean decodeBase64 = ";base64".equals(m.group(2));
     String data = m.group(3);
     byte content[] = decodeBase64 ? Base64.decodeBase64(data) : data.getBytes();
-    LOG.info("[{}] {} byte(s)", contentType, content.length);
+    LOG.debug("[{}] {} byte(s)", contentType, content.length);
     return new BinaryData(contentType, "inline-data", content);
   }
 
