@@ -40,6 +40,7 @@ public final class MailMessageData
   private String m_subject = "(no subject)";
   private String m_plainText;
   private String m_htmlText;
+  private MailPartSource m_alternative;
   private final Map<String,MailPartSource> m_relatedBodyParts = new HashMap<String,MailPartSource>();
   private final Map<String,String> m_customHeaders = new HashMap<String,String>();
   private final List<MailPartSource> m_attachments = new LinkedList<MailPartSource>();
@@ -306,32 +307,47 @@ public final class MailMessageData
     private void composeBodyTo(Part target)
       throws MessagingException
     {
-      if (m_htmlText == null && m_plainText == null)
+      if (m_htmlText == null && m_plainText == null && m_alternative == null)
         // Make sure we have some HTML and/or Plain text body stuff:
         m_plainText = "";
 
-      if (m_htmlText == null)
+      if (m_htmlText == null && m_alternative == null)
       {
         // No HTML. Put plain/text at top level:
         composePlainBodyTo(target);
       }
-      else if (m_plainText == null)
+      else if (m_plainText == null && m_alternative == null)
       {
         // Not Plain text. Put HTML at top level:
         composeHtmlBodyTo(target);
+      }
+      else if (m_htmlText == null && m_plainText == null)
+      {
+        // No text. Put alternative part at top level:
+        composeAlternativeTo(target);
       }
       else
       {
         // Both parts present. Wrap in altenative/multipart message:
         MimeMultipart alternatives = new MimeMultipart("alternative");
 
-        BodyPart plainPart = new MimeBodyPart();
-        plainPart.setContent(m_plainText, MailMessageData.MIME_TYPE_PLAIN);
-        alternatives.addBodyPart(plainPart);
+        if (m_plainText != null) {
+          BodyPart plainPart = new MimeBodyPart();
+          plainPart.setContent(m_plainText, MailMessageData.MIME_TYPE_PLAIN);
+          alternatives.addBodyPart(plainPart);
+        }
 
-        BodyPart htmlPart = new MimeBodyPart();
-        composeHtmlBodyTo(htmlPart);
-        alternatives.addBodyPart(htmlPart);
+        if (m_htmlText != null) {
+          BodyPart htmlPart = new MimeBodyPart();
+          composeHtmlBodyTo(htmlPart);
+          alternatives.addBodyPart(htmlPart);
+        }
+
+        if (m_alternative != null) {
+          BodyPart altPart = new MimeBodyPart();
+          composeAlternativeTo(altPart);
+          alternatives.addBodyPart(altPart);
+        }
 
         target.setContent(alternatives);
       }
@@ -344,6 +360,16 @@ public final class MailMessageData
       throws MessagingException
     {
       target.setContent(m_plainText, MailMessageData.MIME_TYPE_PLAIN);
+    }
+
+    /**
+     * Generates an alternative MIME part.
+     */
+    private void composeAlternativeTo(Part target)
+      throws MessagingException
+    {
+      DataHandler dh = m_alternative.getDataHandler();
+      target.setDataHandler(dh);
     }
 
     /**
