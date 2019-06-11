@@ -119,6 +119,11 @@ public final class MailMessageData
     m_htmlText = text;
   }
 
+  public void setAlternativeBody(MailPartSource altBody)
+  {
+    m_alternative = altBody;
+  }
+
   public void addRecipientTo(InternetAddress address)
   {
     m_recipientsTo.add(address);
