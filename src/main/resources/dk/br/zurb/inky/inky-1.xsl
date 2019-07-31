@@ -74,7 +74,7 @@
   </xsl:template>
 
   <xsl:template match="row">
-    <table>
+    <table role="presentation">
       <xsl:attribute name="class">
         <xsl:choose>
           <xsl:when test="@class = ''">
@@ -131,7 +131,7 @@
       </xsl:attribute>
       <xsl:apply-templates select="@*[name() != 'class']"/>
       
-      <table>
+      <table role="presentation">
         <tbody>
           <tr>
             <th><xsl:apply-templates /></th>
@@ -159,7 +159,7 @@
       return format('<table %s align="center" class="%s"><tbody><tr><td>%s</td></tr></tbody></table>', attrs, classes.join(' '), inner);
 -->
   <xsl:template match="container">
-    <table align="center">
+    <table role="presentation" align="center">
       <xsl:attribute name="class">
         <xsl:value-of select="'container'" />
         <xsl:if test="@class">
@@ -187,7 +187,7 @@
       return format('<table %s class="%s" align="center"><tbody><tr><td class="wrapper-inner">%s</td></tr></tbody></table>', attrs, classes.join(' '), inner);
 -->
   <xsl:template match="wrapper">
-    <table align="center">
+    <table role="presentation" align="center">
       <xsl:attribute name="class">
         <xsl:value-of select="'wrapper'" />
         <xsl:if test="@class">
@@ -239,7 +239,7 @@
       <xsl:when test="@size-sm or @size-lg">
         <xsl:if test="@size-sm">
           <xsl:variable name="size" select="@size-sm" />
-          <table>
+          <table role="presentation">
             <xsl:attribute name="class">
               <xsl:value-of select="'spacer hide-for-large'" />
               <xsl:if test="@class">
@@ -257,7 +257,7 @@
         
         <xsl:if test="@size-lg">
           <xsl:variable name="size" select="@size-lg" />
-          <table>
+          <table role="presentation">
             <xsl:attribute name="class">
               <xsl:value-of select="'spacer show-for-large'" />
               <xsl:if test="@class">
@@ -281,7 +281,7 @@
             <xsl:otherwise>16</xsl:otherwise>
           </xsl:choose>
         </xsl:variable>
-        <table>
+        <table role="presentation">
           <xsl:attribute name="class">
             <xsl:value-of select="'spacer'" />
             <xsl:if test="@class">
@@ -312,7 +312,7 @@
       return format('<table %s class="callout"><tbody><tr><th class="%s">%s</th><th class="expander"></th></tr></tbody></table>', attrs, classes.join(' '), inner);
 -->
   <xsl:template match="callout">
-    <table class="callout">
+    <table role="presentation" class="callout">
       <xsl:apply-templates select="@*[name() != 'class']"/>
 
       <tbody>
@@ -342,7 +342,7 @@
       return format('<table %s class="%s"><tbody><tr><td><table><tbody><tr>%s</tr></tbody></table></td></tr></tbody></table>', attrs, classes.join(' '), inner);
 -->
   <xsl:template match="menu">
-    <table>
+    <table role="presentation">
       <xsl:attribute name="class">
         <xsl:value-of select="'menu'" />
         <xsl:if test="@class">
@@ -353,7 +353,7 @@
 
       <tbody>
         <tr>
-          <td><table><tbody><tr>
+          <td><table role="presentation"><tbody><tr>
             <xsl:apply-templates mode="menu-items" />
           </tr></tbody></table></td>
         </tr>
@@ -461,7 +461,7 @@
 
   <xsl:template match="button">
     <xsl:variable name="classes" select="concat(' ', @class, ' ')" />
-    <table>
+    <table role="presentation">
       <xsl:attribute name="class">
         <xsl:value-of select="'button'" />
         <xsl:if test="@class">
@@ -471,7 +471,7 @@
       <xsl:apply-templates select="@*[name() != 'class' and name() != 'target' and name() != 'href']"/>
       <tbody>
         <tr>
-          <td><table>
+          <td><table role="presentation">
             <tbody>
               <tr>
                 <td>
