@@ -1,5 +1,6 @@
 package dk.br.mail;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -61,6 +62,11 @@ public final class MailMessageData
     m_replyTo.add(address);
   }
 
+  public String getSubject()
+  {
+    return m_subject;
+  }
+
   public void setSubject(String subject)
   {
     m_subject = subject;
@@ -87,6 +93,11 @@ public final class MailMessageData
     m_from.add(address);
   }
 
+  public List<InternetAddress> getFrom()
+  {
+    return Collections.unmodifiableList(m_from);
+  }
+
   public void setSender(InternetAddress address)
   {
     m_sender = address;
@@ -103,6 +114,11 @@ public final class MailMessageData
     return m_bounceTo;
   }
 
+  public String getPlainBody()
+  {
+    return m_plainText;
+  }
+
   public void setPlainBody(String text)
   {
     // Add body part:
@@ -112,6 +128,11 @@ public final class MailMessageData
   public void addRelatedBodyPart(String partId, MailPartSource res)
   {
     m_relatedBodyParts.put(partId, res);
+  }
+
+  public String getHtmlBody()
+  {
+    return m_htmlText;
   }
 
   public void setHtmlBody(String text)
@@ -456,5 +477,92 @@ public final class MailMessageData
       // Mustn't happen
       throw new RuntimeException(ex);
     }
+  }
+
+  public static MailMessageData from(Message msg) throws MessagingException, IOException {
+    MailMessageData d = new MailMessageData();
+    d._readMessage(msg);
+    return d;
+  }
+
+  private void _readMessage(Message msg) throws MessagingException, IOException {
+    setSubject(msg.getSubject());
+    setSentDate(msg.getSentDate());
+    for (Address a : _NVL(msg.getFrom()))
+      addFrom((InternetAddress)a);
+    for (Address a : _NVL(msg.getRecipients(Message.RecipientType.TO)))
+      addRecipientTo((InternetAddress)a);
+    for (Address a : _NVL(msg.getRecipients(Message.RecipientType.CC)))
+      addRecipientCc((InternetAddress)a);
+    for (Address a : _NVL(msg.getReplyTo()))
+      addReplyTo((InternetAddress)a);
+
+    _readPart(msg);
+  }
+
+  private void _readPart(Part p) throws MessagingException, IOException {
+    if (p.isMimeType("text/html")) {
+      setHtmlBody(_CRLF((String)p.getContent()));
+    }
+    else if (p.isMimeType("text/plain")) {
+      setPlainBody(_CRLF((String)p.getContent()));
+    }
+    else if (p.isMimeType("multipart/alternative")) {
+      MimeMultipart mm = (MimeMultipart)p.getContent();
+      for (int i = 0; i < mm.getCount(); i++)
+        _readPart(mm.getBodyPart(i));
+    }
+    else {
+      LOG.info("'{}' ignored", p.getContentType());
+    }
+  }
+
+  // Naive method to normalize any line-ending convention, be it '<CR>',
+  // '<CR>+<LF>', '<LF>+<CR>', into straight '<LF>'.
+  private static String _CRLF(String src) {
+    StringBuilder res = new StringBuilder();
+    int cr = 0;
+    int lf = 0;
+    for (int i = 0; i < src.length(); i++) {
+      char ch = src.charAt(i);
+      if (ch == '\r') {
+        ++cr;
+      }
+      else if (ch == '\n') {
+        ++lf;
+      }
+      else {
+        if (cr > 0) {
+          if (lf == 0)
+            lf = cr;
+          cr = 0;
+        }
+        while (lf > 0) {
+          res.append('\n');
+          lf--;
+        }
+        res.append(ch);
+      }
+    }
+
+    if (cr > 0) {
+      if (lf == 0)
+        lf = cr;
+      cr = 0;
+    }
+    while (lf > 0) {
+      res.append('\n');
+      lf--;
+    }
+
+    return res.toString();
+  }
+
+  private static final Address NO_ADDRESSES[] = new Address[0];
+
+  private static Address[] _NVL(Address src[]) {
+    // Silly null-sanity check, as javax.mail.Message.getRecipients() returns null
+    // instead of empty arrays...
+    return src == null ? NO_ADDRESSES : src;
   }
 }

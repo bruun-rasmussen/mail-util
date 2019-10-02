@@ -28,10 +28,12 @@ public class MailMessageParser
   private final static Logger LOG = LoggerFactory.getLogger(MailMessageParser.class);
 
   private final boolean useCssInliner;
+  private final String htmlEncoding;
 
   private MailMessageParser()
   {
     useCssInliner = "1|yes|true".contains(System.getProperty("dk.br.mail.inline-css", "false"));
+    htmlEncoding = System.getProperty("dk.br.mail.html-encoding", "UTF-8");
   }
 
   private final static Pattern CSS_URL_PATTERN = Pattern.compile("(.*)url\\(([^\\)]+)\\)(.*)");
@@ -230,7 +232,7 @@ public class MailMessageParser
       digestHtmlNodeList(bodyNodes);
 
       // Serialize the modified back HTML to text:
-      String bodyText = _htmlText(bodyNodes, "iso-8859-1", seenInky, useCssInliner);
+      String bodyText = _htmlText(bodyNodes, htmlEncoding, seenInky, useCssInliner);
       msg.setHtmlBody(bodyText);
 
       // Attach the dereferenced resources to be included as "related" MIME parts in the
@@ -442,8 +444,8 @@ public class MailMessageParser
       String embed = elem.getAttribute("embed");
       if ("inline".equals(embed)) {
         // Embed resource inline as 'data:<type>;base64,<data>' encoded URL.
-        // This will not work on newer GMail, Outlook, and many other webmails, 
-        // so don't use it (even if believed to offer a work-around for a rendering 
+        // This will not work on newer GMail, Outlook, and many other webmails,
+        // so don't use it (even if believed to offer a work-around for a rendering
         // bug in Apple Mail.)
         // See https://blog.mailtrap.io/2018/11/02/embedding-images-in-html-email-have-the-rules-changed/
         String inlineBase64 = inlineData(urlText);

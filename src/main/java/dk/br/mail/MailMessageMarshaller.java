@@ -47,8 +47,8 @@ public class MailMessageMarshaller
 
     Document doc = db.newDocument();
     Element e = doc.createElement("email");
-    doc.appendChild(e);
     new MailMessageMarshaller().digestMail(e, msg);
+    doc.appendChild(e);
     return doc;
   }
 
@@ -58,9 +58,8 @@ public class MailMessageMarshaller
 
   private final static DateFormat ISO8601_TS = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 
-  private void digestMail(Node n, Message msg) throws MessagingException
+  private void digestMail(Element m, Message msg) throws MessagingException
   {
-    Element m = _addElement(n, "email");
     for (String mid : msg.getHeader("Message-ID"))
       _addText(m, "message-id", mid);
     _addDate(m, "sent", msg.getSentDate());
@@ -102,6 +101,18 @@ public class MailMessageMarshaller
       _addText(m, "plain-body", plainbody);
     }
     else if (p.isMimeType("multipart/alternative"))
+    {
+      MimeMultipart mm = (MimeMultipart)p.getContent();
+      for (int i = 0; i < mm.getCount(); i++)
+        _digestMimePart(m, mm.getBodyPart(i));
+    }
+    else if (p.isMimeType("multipart/related"))
+    {
+      MimeMultipart mm = (MimeMultipart)p.getContent();
+      for (int i = 0; i < mm.getCount(); i++)
+        _digestMimePart(m, mm.getBodyPart(i));
+    }
+    else if (p.isMimeType("multipart/mixed"))
     {
       MimeMultipart mm = (MimeMultipart)p.getContent();
       for (int i = 0; i < mm.getCount(); i++)

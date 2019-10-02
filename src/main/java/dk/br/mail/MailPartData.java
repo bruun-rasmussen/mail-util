@@ -27,35 +27,35 @@ import org.slf4j.LoggerFactory;
 public abstract class MailPartData implements MailPartSource, Serializable
 {
   private final static Logger LOG = LoggerFactory.getLogger(MailPartData.class);
-  
+
   protected abstract DataSource _source() throws MessagingException;
 
   public DataHandler getDataHandler() throws MessagingException {
     DataSource ds = _source();
     return new DataHandler(ds);
   }
-  
+
   /**
-   * Return a lazy-loading part source wrapping a URL for the target resource to 
-   * be fetched and embedded during the mail composition. 
+   * Return a lazy-loading part source wrapping a URL for the target resource to
+   * be fetched and embedded during the mail composition.
    */
   private static MailPartData remote(URL url) {
     return new RemoteHtmlResource(url);
   }
-  
+
   /**
-   * Fetch the target resource and return the content as a mail part source to be 
+   * Fetch the target resource and return the content as a mail part source to be
    * embedded during mail composition.
    * @throws  IOException    if the content cannot be fetched
    */
   private static MailPartData local(URL url) throws IOException {
     return _read(url);
   }
-  
+
   public static MailPartSource wrap(final DataSource src) {
     if (!(src instanceof Serializable))
       throw new IllegalArgumentException("must be serializable");
-    
+
     return new MailPartData() {
       @Override
       protected DataSource _source() throws MessagingException
@@ -64,35 +64,35 @@ public abstract class MailPartData implements MailPartSource, Serializable
       }
     };
   }
-  
+
   public static MailPartData from(String contentType, String name, byte content[]) {
     return new BinaryData(contentType, name, content);
   }
 
 
-  private final static Pattern BASE64_INLINE_URL = Pattern.compile("data:([^;]*)(;[^,]*)?,(.*)");
-  
+  private final static Pattern BASE64_INLINE_URL = Pattern.compile("data:(?<contentType>[^;]*)(?<encoding>;[^,]*)?,(?<payload>.*)");
+
   private static MailPartData inline(String dataUrl) {
     Matcher m = BASE64_INLINE_URL.matcher(dataUrl);
     if (!m.matches())
       throw new IllegalArgumentException("'" + dataUrl + "': unrecognized data: URL format");
-    String contentType = m.group(1);
-    boolean decodeBase64 = ";base64".equals(m.group(2));
-    String data = m.group(3);
-    byte content[] = decodeBase64 ? Base64.decodeBase64(data) : data.getBytes();
+    String contentType = m.group("contentType");
+    boolean decodeBase64 = ";base64".equals(m.group("encoding"));
+    String payload = m.group("payload");
+    byte content[] = decodeBase64 ? Base64.decodeBase64(payload) : payload.getBytes();
     LOG.debug("[{}] {} byte(s)", contentType, content.length);
     return new BinaryData(contentType, "inline-data", content);
   }
 
 
-  public static MailPartData from(String href) 
-        throws IOException 
+  public static MailPartData from(String href)
+        throws IOException
   {
     return from(href, null);
   }
 
-  public static MailPartData from(String href, URL baseHref) 
-        throws IOException 
+  public static MailPartData from(String href, URL baseHref)
+        throws IOException
   {
     if (href.startsWith("res:"))
     {
@@ -128,7 +128,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
   }
 
 
-  
+
   private static BinaryData _read(URL url)
     throws IOException
   {
@@ -148,7 +148,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
 
     // Strip .../some/path/my-file.pdf path prefix
     int spos = name.lastIndexOf('/');
-    if (spos >= 0) 
+    if (spos >= 0)
       name = name.substring(spos + 1);
 
     InputStream is = conn.getInputStream();
@@ -175,7 +175,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
       out.write(buf, 0, n);
     return out.toByteArray();
   }
-  
+
   /*
    *  A lazy container for a URL data handler. URL is serializable, DataHandler is not.
    */
@@ -190,7 +190,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
     }
 
     @Override
-    public DataSource _source() throws MessagingException {         
+    public DataSource _source() throws MessagingException {
       // return new URLDataSource(m_urlSpec);
       String tsUrl = m_urlSpec.toString().replaceAll(Pattern.quote("$TS$"), Long.toString(System.currentTimeMillis()));
       try
@@ -278,7 +278,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
     {
       return "[" + m_name + ": " + m_content.length + " bytes of " + m_contentType + "]";
     }
-    
+
     public DataSource _source()
     {
       return new DataSource() {
