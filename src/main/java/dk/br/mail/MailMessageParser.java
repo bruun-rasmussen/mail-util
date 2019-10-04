@@ -27,16 +27,9 @@ public class MailMessageParser
 {
   private final static Logger LOG = LoggerFactory.getLogger(MailMessageParser.class);
 
-  private final boolean useCssInliner;
-  private final String htmlEncoding;
-
   private MailMessageParser()
   {
-    useCssInliner = "1|yes|true".contains(System.getProperty("dk.br.mail.inline-css", "false"));
-    htmlEncoding = System.getProperty("dk.br.mail.html-encoding", "UTF-8");
   }
-
-  private final static Pattern CSS_URL_PATTERN = Pattern.compile("(.*)url\\(([^\\)]+)\\)(.*)");
 
   public static MailMessageData[] parseMails(Node mailListNode)
     throws IOException
@@ -185,19 +178,19 @@ public class MailMessageParser
    */
   private InternetAddress getAddress(Element element)
   {
-    String address = _text(element.getElementsByTagName("email-address").item(0));
-    if (address == null || address.equals(""))
-      throw new IllegalArgumentException("email-address is missing");
+    Node address = element.getElementsByTagName("email-address").item(0);
+    if (address == null)
+      throw new IllegalArgumentException("'" + element.getTagName() + "' email-address is missing");
 
     Node personal = element.getElementsByTagName("personal").item(0);
     try
     {
-      InternetAddress addr = new InternetAddress(address, personal == null ? null : _text(personal));
+      InternetAddress addr = new InternetAddress(_text(address), personal == null ? null : _text(personal));
       try {
         addr.validate();
       }
       catch (AddressException ex) {
-        throw new IllegalArgumentException("unparseable email-address " + address + " - " + ex.getMessage());
+        throw new IllegalArgumentException("unparseable email-address - " + ex.getMessage());
       }
       return addr;
     }
@@ -207,10 +200,20 @@ public class MailMessageParser
     }
   }
 
-  private class HtmlPartParser
+  private final static Pattern CSS_URL_PATTERN = Pattern.compile("(?<before>.*)url\\((?<url>[^\\)]+)\\)(?<after>.*)");
+
+  private static class HtmlPartParser
   {
+    private final String htmlEncoding;
+    private final boolean useCssInliner;
+
     boolean seenInky;
     URL m_baseHref;
+
+    private HtmlPartParser() {
+      htmlEncoding = System.getProperty("dk.br.mail.html-encoding", "UTF-8");
+      useCssInliner = "1|yes|true".contains(System.getProperty("dk.br.mail.inline-css", "false"));
+    }
 
     // <Source URL> -> <Part-ID> map for all resources embedded as Related MIME parts
     final Map<String,String> m_resourcePartIds = new HashMap<String,String>();
@@ -399,7 +402,7 @@ public class MailMessageParser
       Matcher m = CSS_URL_PATTERN.matcher(style);
       if (!m.matches())
         return style;
-      return digestStyleUrls(m.group(1)) + "url(" + cidReference(m.group(2)) + ")" + digestStyleUrls(m.group(3));
+      return digestStyleUrls(m.group("before")) + "url(" + cidReference(m.group("url")) + ")" + digestStyleUrls(m.group("after"));
     }
 
     /**

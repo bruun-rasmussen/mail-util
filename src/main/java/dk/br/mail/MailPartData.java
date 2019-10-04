@@ -6,10 +6,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -127,15 +129,43 @@ public abstract class MailPartData implements MailPartSource, Serializable
     }
   }
 
+  private static URLConnection _connect(URL url)
+      throws IOException
+  {
+    int redirects = 0;
+    while (url.getProtocol().startsWith("http")) {
+      // https://stackoverflow.com/a/26046079/442782
+      HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+      conn.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Thunderbird/45.8.0");
+      conn.setConnectTimeout(15000);
+      conn.setReadTimeout(15000);
+      conn.setInstanceFollowRedirects(false);
 
+      int res = conn.getResponseCode();
+      if (res != 301 && res != 302) {
+        if (res == 200)
+          LOG.debug("{} ({} {})", url, res, conn.getResponseMessage());
+        else
+          LOG.info("{} ({} {})", url, res, conn.getResponseMessage());
+        return conn;
+      }
+
+      String location = URLDecoder.decode(conn.getHeaderField("Location"), "UTF-8");
+      LOG.info("{} -> {} ({} {})", url, location, res, conn.getResponseMessage());
+      url = new URL(url, location);  // Deal with relative URLs
+      if (++redirects > 6)
+        throw new IOException("too many redirects");
+    }
+    return url.openConnection();
+  }
 
   private static BinaryData _read(URL url)
-    throws IOException
+      throws IOException
   {
     long t1 = System.currentTimeMillis();
     LOG.debug("fetching {}", url);
-    URLConnection conn = url.openConnection();
-    conn.connect();
+    URLConnection conn = _connect(url);
+
     String contentType = conn.getContentType();
     String contentEncoding = conn.getContentEncoding();
 

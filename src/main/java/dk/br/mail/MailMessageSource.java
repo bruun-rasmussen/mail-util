@@ -16,6 +16,7 @@ public interface MailMessageSource
   MimeMessage compose(Session session, boolean failsafe)
     throws MessagingException;
 
+  String getSubject();
   InternetAddress getFirstRecipient();
   InternetAddress getBounceAddress();
 }
