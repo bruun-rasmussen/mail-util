@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.mail.MessagingException;
+import javax.net.ssl.SSLException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -141,7 +142,18 @@ public abstract class MailPartData implements MailPartSource, Serializable
       conn.setReadTimeout(15000);
       conn.setInstanceFollowRedirects(false);
 
-      int res = conn.getResponseCode();
+      int res;
+      try {
+        res = conn.getResponseCode();
+      }
+      catch (SSLException ex) {
+        if ("https".equals(url.getProtocol()) && 443 == url.getPort()) {
+          LOG.warn("{} SSL connection error - {}", url, ex.getMessage());
+          URL retryUrl = new URL(url.toString().replaceFirst("^https", "http"));
+          return _connect(retryUrl);
+        }
+        throw ex;
+      }
       if (res != 301 && res != 302) {
         if (res == 200)
           LOG.debug("{} ({} {})", url, res, conn.getResponseMessage());
@@ -220,26 +232,28 @@ public abstract class MailPartData implements MailPartSource, Serializable
     }
 
     @Override
-    public DataSource _source() throws MessagingException {
+    protected DataSource _source() throws MessagingException {
       // return new URLDataSource(m_urlSpec);
       String tsUrl = m_urlSpec.toString().replaceAll(Pattern.quote("$TS$"), Long.toString(System.currentTimeMillis()));
+      BinaryData data;
       try
       {
         URL url = new URL(tsUrl);
         try {
-          BinaryData data = _read(url);
-          LOG.debug("attaching {}", data);
-          return data._source();
+          data = _read(url);
         }
         catch (IOException ex)
         {
-          throw new MessagingException(ex.getMessage());
+          throw new MessagingException("failed to fetch " + url, ex);
         }
       }
       catch (MalformedURLException ex)
       {
         throw new RuntimeException(ex);
       }
+
+      LOG.debug("attaching {}", data);
+      return data._source();
     }
 
     @Override
@@ -309,7 +323,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
       return "[" + m_name + ": " + m_content.length + " bytes of " + m_contentType + "]";
     }
 
-    public DataSource _source()
+    protected DataSource _source()
     {
       return new DataSource() {
 
