@@ -147,9 +147,9 @@ public abstract class MailPartData implements MailPartSource, Serializable
         res = conn.getResponseCode();
       }
       catch (SSLException ex) {
-        if ("https".equals(url.getProtocol()) && 443 == url.getPort()) {
-          LOG.warn("{} SSL connection error - {}", url, ex.getMessage());
-          URL retryUrl = new URL(url.toString().replaceFirst("^https", "http"));
+        if ("https".equals(url.getProtocol()) && url.getPort() == -1) {
+          URL retryUrl = new URL(url.toString().replaceFirst("^https:", "http:"));
+          LOG.warn("{} - {}, retry {}", url, ex.getMessage(), retryUrl);
           return _connect(retryUrl);
         }
         throw ex;
