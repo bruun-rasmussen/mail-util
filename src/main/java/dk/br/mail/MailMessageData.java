@@ -25,7 +25,7 @@ public final class MailMessageData
 {
   private final static Logger LOG = LoggerFactory.getLogger(MailMessageData.class);
 
-  final static long serialVersionUID = -7000283573789414687L;
+  private static final long serialVersionUID = 3478570608187099960L;
 
   private final static String MIME_TYPE_HTML = "text/html";
   private final static String MIME_TYPE_PLAIN = "text/plain; charset=UTF-8; format=flowed";
@@ -37,6 +37,7 @@ public final class MailMessageData
   private final List<InternetAddress> m_recipientsTo = new LinkedList<InternetAddress>();
   private final List<InternetAddress> m_recipientsCc = new LinkedList<InternetAddress>();
   private final List<InternetAddress> m_recipientsBcc = new LinkedList<InternetAddress>();
+  private String m_messageID;
   private Date m_sentDate = new Date();
   private String m_subject = "(no subject)";
   private String m_plainText;
@@ -70,6 +71,16 @@ public final class MailMessageData
   public void setSubject(String subject)
   {
     m_subject = subject;
+  }
+
+  public String getMessageID()
+  {
+    return m_messageID;
+  }
+
+  public void setMessageID(String messageID)
+  {
+    m_messageID = messageID;
   }
 
   public void setSentDate(Date date)

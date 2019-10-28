@@ -3,6 +3,8 @@ package dk.br.mail;
 import dk.br.zurb.inky.Inky;
 import java.io.*;
 import java.net.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,28 +38,28 @@ public class MailMessageParser
   {
     MailMessageParser parser = new MailMessageParser();
 
-    List<MailMessageData> result = new LinkedList<MailMessageData>();
+    List<MailMessageData> result = new LinkedList();
     NodeList mailListNodes = mailListNode.getChildNodes();
     for (int j = 0; j < mailListNodes.getLength(); j++)
     {
-      Node mailList = mailListNodes.item(j);
-      if ("email-list".equals(mailList.getNodeName()))
+      Node mailItem = mailListNodes.item(j);
+      if ("email-list".equals(mailItem.getNodeName()))
       {
-        LOG.debug("### parsing {}", mailList.getNodeName());
-        NodeList mailNodes = mailList.getChildNodes();
+        LOG.debug("### parsing {}", mailItem.getNodeName());
+        NodeList mailNodes = mailItem.getChildNodes();
         for (int i = 0; i < mailNodes.getLength(); i++)
         {
           Node mailNode = mailNodes.item(i);
           if ("email".equals(mailNode.getNodeName()))
           {
-            MailMessageData msg = parser.tryParseMail(mailNode);
+            MailMessageData msg = parser.tryParseMail((Element)mailNode);
             result.add(msg);
           }
         }
       }
-      else if ("email".equals(mailList.getNodeName()))
+      else if ("email".equals(mailItem.getNodeName()))
       {
-        MailMessageData msg = parser.tryParseMail(mailList);
+        MailMessageData msg = parser.tryParseMail((Element)mailItem);
         result.add(msg);
       }
     }
@@ -68,44 +70,59 @@ public class MailMessageParser
   /**
    * Parses custom XML e-mail specification into a serializable, transportable, object.
    */
-  public static MailMessageData parseMail(Node mailNode)
+  public static MailMessageData parseMail(Element mailNode)
     throws IOException
   {
     return new MailMessageParser().tryParseMail(mailNode);
   }
 
-  private MailMessageData tryParseMail(Node mailNode)
+  private MailMessageData tryParseMail(Element mailNode)
     throws IOException
   {
     LOG.debug("###    parsing {}", mailNode.getNodeName());
+
+    // Pass 1: read any <related>...</related> mime parts already present, if any, to have
+    // them handy for <xxx src="cid:...") style references in the html part. Relevant only
+    // for XML produced from marshalling an actual existing mime-message:
+    Map<String,MailPartSource> related = parseRelatedParts(mailNode);
 
     MailMessageData msg = new MailMessageData();
 
     NodeList mailProperties = mailNode.getChildNodes();
     for (int i = 0; i < mailProperties.getLength(); i++)
     {
-      Node propertyNode = mailProperties.item(i);
-      if (propertyNode.getNodeType() != Node.ELEMENT_NODE)
+      Node _node = mailProperties.item(i);
+      if (_node.getNodeType() != Node.ELEMENT_NODE)
+      {
+        LOG.debug("{}({}) ignored", _node, _node.getNodeType());
         continue;
+      }
 
-      String propertyName = propertyNode.getNodeName();
+      Element propertyNode = (Element)_node;
+      String propertyName = propertyNode.getTagName();
       if ("subject".equals(propertyName))
       {
         String subject = _text(propertyNode);
-        LOG.debug("SUBJECT: {}", subject);
+        LOG.debug("subject: \"{}\"", subject);
         msg.setSubject(subject);
+      }
+      else if ("sent".equals(propertyName))
+      {
+        Date sent = _timestamp(propertyNode);
+        LOG.debug("sent: {}", sent);
+        msg.setSentDate(sent);
       }
       else if ("plain-body".equals(propertyName))
       {
         String body = _text(propertyNode);
-        LOG.debug("text/plain body: {} characters", body.length());
+        LOG.debug("text/plain body: {} characters\n{}", body.length(), body);
         msg.setPlainBody(body);
       }
       else if ("html-body".equals(propertyName))
       {
         NodeList bodyNodes = propertyNode.getChildNodes();
         HtmlPartParser parser = new HtmlPartParser();
-        parser.digest(bodyNodes, msg);
+        parser.digest(bodyNodes, msg, related);
       }
       else if ("addresses".equals(propertyName))
       {
@@ -113,25 +130,82 @@ public class MailMessageParser
       }
       else if ("header".equals(propertyName))
       {
-        String name = ((Element)propertyNode).getAttribute("name");
-        String value = ((Element)propertyNode).getAttribute("value");
+        String name = propertyNode.getAttribute("name");
+        String value = propertyNode.getAttribute("value");
         if (StringUtils.isEmpty(value))
           value = _text(propertyNode);
-        LOG.debug("{}: {}", name, value);
+        LOG.debug("{}: \"{}\"", name, value);
         msg.setCustomHeader(name, value);
+      }
+      else if ("related".equals(propertyName))
+      {
+        // Do nothing
+        String partId = "cid:" + propertyNode.getAttribute("id");
+        LOG.debug("(seen {} : {})", partId, related.get(partId));
       }
       else if ("attachment".equals(propertyName))
       {
-        String src = ((Element)propertyNode).getAttribute("src");
+        String src = propertyNode.getAttribute("src");
         msg.attach(MailPartData.from(src, null));
+      }
+      else if ("message-id".equals(propertyName))
+      {
+        String messageID = _text(propertyNode);
+        msg.setMessageID(messageID);
       }
       else
       {
-        LOG.error("{}: invalid mail property", propertyName);
+        String value = _text(propertyNode);
+        String unknown = "X-" + StringUtils.capitalize(propertyName);
+        msg.setCustomHeader(unknown, value);
+
+        LOG.warn("unknown {}: \"{}\"", unknown, value);
       }
     }
-
     return msg;
+  }
+
+  private static Map<String,MailPartSource> parseRelatedParts(Element mailNode) throws IOException
+  {
+    Map<String,MailPartSource> related = new HashMap();
+    NodeList mailProperties = mailNode.getChildNodes();
+    for (int i = 0; i < mailProperties.getLength(); i++)
+    {
+      Node _node = mailProperties.item(i);
+      if (_node.getNodeType() != Node.ELEMENT_NODE)
+      {
+        LOG.debug("{}({}) ignored", _node, _node.getNodeType());
+        continue;
+      }
+
+      Element tag = (Element)_node;
+      String tagName = tag.getTagName();
+      if ("related".equals(tagName))
+      {
+        String partId = "cid:" + tag.getAttribute("id");
+        MailPartSource partSource = parseRelatedMimePart(tag.getChildNodes());
+        related.put(partId, partSource);
+        LOG.debug("save {} : {}", partId, partSource);
+      }
+    }
+    return related;
+  }
+
+  private static MailPartData parseRelatedMimePart(NodeList partNodes)
+  {
+    String contentType = null;
+    String name = null;
+    byte content[] = null;
+
+    for (int i = 0; i < partNodes.getLength(); i++)
+    {
+      Node partNode = partNodes.item(i);
+      if ("type".equals(partNode.getNodeName()))
+        contentType = _text((Element)partNode);
+      else if ("content".equals(partNode.getNodeName()))
+        content = Base64.decodeBase64(_text((Element)partNode));
+    }
+    return MailPartData.from(contentType, name, content);
   }
 
   private void parseAddresses(NodeList addressNodes, MailMessageData msg)
@@ -148,7 +222,7 @@ public class MailMessageParser
   {
     String type = addressElement.getNodeName();
     InternetAddress addr = getAddress(addressElement);
-    LOG.debug("{} {}", type, addr);
+    LOG.debug("{}: [{}]", type, addr);
 
     if ("to".equals(type))
       msg.addRecipientTo(addr);
@@ -178,11 +252,11 @@ public class MailMessageParser
    */
   private InternetAddress getAddress(Element element)
   {
-    Node address = element.getElementsByTagName("email-address").item(0);
+    Element address = (Element)element.getElementsByTagName("email-address").item(0);
     if (address == null)
       throw new IllegalArgumentException("'" + element.getTagName() + "' email-address is missing");
 
-    Node personal = element.getElementsByTagName("personal").item(0);
+    Element personal = (Element)element.getElementsByTagName("personal").item(0);
     try
     {
       InternetAddress addr = new InternetAddress(_text(address), personal == null ? null : _text(personal));
@@ -215,26 +289,30 @@ public class MailMessageParser
       useCssInliner = "1|yes|true".contains(System.getProperty("dk.br.mail.inline-css", "false"));
     }
 
-    // <Source URL> -> <Part-ID> map for all resources embedded as Related MIME parts
-    final Map<String,String> m_resourcePartIds = new HashMap<String,String>();
-    // <Source URL> -> <Binary Data> map for same
-    final Map<String,MailPartSource> m_resourceContent = new HashMap<String,MailPartSource>();
+    // <Source URI> -> <Part-ID> map for all resources embedded as Related MIME parts
+    final Map<String,String> m_resourcePartIds = new HashMap();
+    // <Source URI> -> <Binary Data> map for same
+    final Map<String,MailPartSource> m_resourceContent = new HashMap();
 
-    Stack<Map<String,String>> m_tags = new Stack<Map<String,String>>();
+    Stack<Map<String,String>> m_tags = new Stack();
 
-    private void digest(NodeList bodyNodes, MailMessageData msg)
+    private void digest(NodeList bodyNodes, MailMessageData msg, Map<String,MailPartSource> related)
       throws IOException
     {
       // Initialize:
       seenInky = false;
+
       m_resourcePartIds.clear();
       m_resourceContent.clear();
+      m_resourceContent.putAll(related);
 
       // Traverse HTML DOM, extracting and dereferencing external resources (style sheets,
       // images, etc.) as we go:
       digestHtmlNodeList(bodyNodes);
 
-      // Serialize the modified back HTML to text:
+      LOG.info("HTML digested: {} part ids, {} content parts", m_resourcePartIds.size(), m_resourceContent.size());
+
+      // Serialize the modified HTML back to text:
       String bodyText = _htmlText(bodyNodes, htmlEncoding, seenInky, useCssInliner);
       msg.setHtmlBody(bodyText);
 
@@ -364,8 +442,6 @@ public class MailMessageParser
     {
       // Do nothing right now - this could be a great place
       // for "BBCode"-style post-processing variable text.
-      if (LOG.isDebugEnabled())
-        LOG.debug("### '{}'", text.getData());
     }
 
     private void digestWebLink(Element anchor)
@@ -402,7 +478,17 @@ public class MailMessageParser
       Matcher m = CSS_URL_PATTERN.matcher(style);
       if (!m.matches())
         return style;
-      return digestStyleUrls(m.group("before")) + "url(" + cidReference(m.group("url")) + ")" + digestStyleUrls(m.group("after"));
+      return digestStyleUrls(m.group("before")) + "url(" + _cidReference(m.group("url")) + ")" + digestStyleUrls(m.group("after"));
+    }
+
+    private static Attr attrIgnoreCase(Element elem, String attr) {
+      NamedNodeMap attrMap = elem.getAttributes();
+      for (int i = 0; i < attrMap.getLength(); i++) {
+        Attr n = (Attr)attrMap.item(i);
+        if (n.getNodeName().equalsIgnoreCase(attr))
+          return n;
+      }
+      return null;
     }
 
     /**
@@ -414,7 +500,9 @@ public class MailMessageParser
     private void replaceResource(Element elem, String resourceAttribute)
       throws DOMException, IOException
     {
-      String urlText = elem.getAttribute(resourceAttribute);
+      Attr urlAttr = attrIgnoreCase(elem, resourceAttribute);
+      String attrName = urlAttr == null ? null : urlAttr.getName();
+      String urlText = urlAttr == null ? null : urlAttr.getValue();
 
       if (StringUtils.isEmpty(urlText))
       {
@@ -425,13 +513,14 @@ public class MailMessageParser
           Node child = children.item(i);
           if ("binary-content".equalsIgnoreCase(child.getNodeName()))
           {
-            String md5 = ((Element)child).getAttribute("md5");
-            String contentType = ((Element)child).getAttribute("type");
+            Element tag = (Element)child;
+            String md5 = tag.getAttribute("md5");
+            String contentType = tag.getAttribute("type");
             urlText = "mem:/" + md5;
             MailPartSource binaryContent = m_resourceContent.get(urlText);
             if (binaryContent == null)
             {
-              String binaryContentBase64 = _text(child);
+              String binaryContentBase64 = _text(tag);
               byte bytes[] = Base64.decodeBase64(binaryContentBase64.getBytes());
               binaryContent = MailPartData.from(contentType, md5, bytes);
               m_resourceContent.put(urlText, binaryContent);
@@ -452,12 +541,14 @@ public class MailMessageParser
         // bug in Apple Mail.)
         // See https://blog.mailtrap.io/2018/11/02/embedding-images-in-html-email-have-the-rules-changed/
         String inlineBase64 = inlineData(urlText);
+        elem.removeAttribute(attrName);
         elem.setAttribute(resourceAttribute, inlineBase64);
       }
       else if (!"false".equals(embed)) {
         // Embed resource as related MIME part. Replace the URL value by
         // intra-mail 'cid:'-... reference:
-        String cidRef = cidReference(urlText);
+        String cidRef = _cidReference(urlText);
+        elem.removeAttribute(attrName);
         elem.setAttribute(resourceAttribute, cidRef);
       }
       // Otherwise, just leave resource URL as is
@@ -489,7 +580,7 @@ public class MailMessageParser
       return "data:" + contentType + ";base64," + Base64.encodeBase64String(content);
     }
 
-    private String cidReference(String urlText)
+    private String _cidReference(String urlText)
     {
       // Store the resource content away in m_resources for attachment later, and
       // replace the URL-attribute by an appropriate intra-mail reference:
@@ -536,7 +627,7 @@ public class MailMessageParser
       }
     }
 
-    private MailPartSource partFromRef(String ref) throws IOException {
+    private MailPartSource partFromRef(final String ref) throws IOException {
       MailPartSource part = m_resourceContent.get(ref);
       if (part == null) {
         part = MailPartData.from(ref, m_baseHref);
@@ -546,10 +637,23 @@ public class MailMessageParser
     }
   }
 
-  private static String _text(Node n)
+  private final DateFormat iso8601_ts = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+
+  private Date _timestamp(Element e)
+  {
+    String text = _text(e);
+    try {
+      return iso8601_ts.parse(text);
+    }
+    catch (java.text.ParseException ex) {
+      throw new IllegalArgumentException("'" + e.getTagName() + "' unparseable date \"" + text + "\"");
+    }
+  }
+
+  private static String _text(Element e)
   {
     StringBuilder result = new StringBuilder();
-    NodeList children = n.getChildNodes();
+    NodeList children = e.getChildNodes();
     for (int i = 0; i < children.getLength(); i++)
     {
       String s = children.item(i).getNodeValue();

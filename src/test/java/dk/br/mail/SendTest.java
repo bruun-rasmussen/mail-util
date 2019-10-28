@@ -21,7 +21,10 @@ import javax.xml.transform.stream.StreamSource;
 import junit.framework.TestCase;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.W3CDom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
@@ -29,6 +32,8 @@ import org.w3c.dom.Node;
  */
 public class SendTest extends TestCase
 {
+  private final static Logger LOG = LoggerFactory.getLogger(SendTest.class);
+
   public void testThis() throws IOException, TransformerException, MessagingException {
     URL htmlSrcUrl = getClass().getClassLoader().getResource("dk/br/zurb/mail/br_soegeagent.html");
     Document html = htmlSouped(htmlSrcUrl);
@@ -54,7 +59,7 @@ public class SendTest extends TestCase
     toXml.transform(new DOMSource(email), new StreamResult(System.out));
 
     System.setProperty("dk.br.mail.base64-embed", "true");
-    MailMessageData mailData = MailMessageParser.parseMail(email.getFirstChild()); // <- da fuk?!
+    MailMessageData mailData = MailMessageParser.parseMail((Element)email.getFirstChild()); // <- da fuk?!
     mailData.setCustomHeader("X-SentFromClass", getClass().getName());
 
     send(mailData);
@@ -63,13 +68,19 @@ public class SendTest extends TestCase
   private static void send(MailMessageSource src) throws MessagingException, IOException {
     Session session = Session.getInstance(new Properties());
     MimeMessage msg = src.compose(session, true);
-    
+    // msg.getMessageID() is still null here
+
     File mailtest_eml = new File("mailtest.eml");
     FileOutputStream os = new FileOutputStream(mailtest_eml);
-    msg.writeTo(os);
-    os.close();
-    
-    System.out.println("wrote " + mailtest_eml.getAbsolutePath());    
+    try {
+      msg.writeTo(os); // <- msg.getMessageID() gets set here
+    }
+    finally {
+      os.close();
+    }
+
+    String messageId = msg.getMessageID();
+    LOG.info("wrote {}: {}", messageId, mailtest_eml.getAbsolutePath());
   }
 
   private static Document htmlSouped(URL srcUrl) throws IOException
