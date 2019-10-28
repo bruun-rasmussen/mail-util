@@ -173,8 +173,16 @@ public class Inky
     }
   }
 
-  private void inlineCss(Node n, StyleMap sm)
+  /**
+   * Traverse DOM tree, depth-first, adding or patching a style=&quot;...; ...; ...&quot; attribute on every
+   * element, according to the rules in {@code sm}
+   */
+  private static void inlineCss(Node n, StyleMap sm)
   {
+    // No CSS inlining <noinky> here </noinky>
+    if ("noinky".equals(n.getNodeName()))
+      return;
+
     NodeList cs = n.getChildNodes();
     for (int i = 0; i < cs.getLength(); i++)
       inlineCss(cs.item(i), sm);
@@ -188,7 +196,7 @@ public class Inky
     }
   }
 
-  private void patch(Element e, NodeData css)
+  private static void patch(Element e, NodeData css)
   {
     String s = e.getAttribute("style");
     if (s == null)

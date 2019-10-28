@@ -6,10 +6,23 @@
   <xsl:param name="styling-css" />
 
   <xsl:param name="column-count" select="12" />
-  
+
   <xsl:template match="@*|node()">
     <xsl:copy>
       <xsl:apply-templates select="@*|node()"/>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="noinky">
+    <xsl:copy>
+      <!-- marker element stripped in inky-2.xsl (after css-inlining) -->
+      <xsl:apply-templates select="@*|node()" mode="noinky" />
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="@*|node()" mode="noinky">
+    <xsl:copy>
+      <xsl:apply-templates select="@*|node()" mode="noinky" />
     </xsl:copy>
   </xsl:template>
 
@@ -21,9 +34,9 @@
           <xsl:apply-templates select="body" />
         </xsl:when>
         <xsl:otherwise>
-          <xsl:apply-templates select="body" mode="embed-styling" />          
+          <xsl:apply-templates select="body" mode="embed-styling" />
         </xsl:otherwise>
-      </xsl:choose>      
+      </xsl:choose>
     </xsl:copy>
   </xsl:template>
 
@@ -35,7 +48,7 @@
           <xsl:comment>
             <xsl:value-of select="$outline-css" />
           </xsl:comment>
-        </style>        
+        </style>
       </xsl:if>
       <xsl:if test="$styling-css != ''">
         <xsl:comment> inline styling </xsl:comment>
@@ -43,11 +56,11 @@
           <xsl:comment>
             <xsl:value-of select="$styling-css" />
           </xsl:comment>
-        </style>        
+        </style>
       </xsl:if>
 
       <xsl:apply-templates />
-    </xsl:copy>    
+    </xsl:copy>
   </xsl:template>
 
   <xsl:template match="head" mode="embed-styling">
@@ -60,7 +73,7 @@
           <xsl:comment>
             <xsl:value-of select="$outline-css" />
           </xsl:comment>
-        </style>        
+        </style>
       </xsl:if>
       <xsl:if test="$styling-css != ''">
         <xsl:comment> inline styling </xsl:comment>
@@ -68,9 +81,9 @@
           <xsl:comment>
             <xsl:value-of select="$styling-css" />
           </xsl:comment>
-        </style>        
+        </style>
       </xsl:if>
-    </xsl:copy>    
+    </xsl:copy>
   </xsl:template>
 
   <xsl:template match="row">
@@ -86,26 +99,26 @@
         </xsl:choose>
       </xsl:attribute>
       <xsl:apply-templates select="@*[name() != 'class']"/>
-      
+
       <tbody>
         <tr>
           <xsl:apply-templates />
         </tr>
       </tbody>
-    </table>    
+    </table>
   </xsl:template>
 
   <xsl:template match="columns">
     <xsl:variable name="sibling-count" select="count(preceding-sibling::columns) + 1 + count(following-sibling::columns)" />
     <xsl:variable name="pos" select="count(preceding-sibling::columns)" />
     <xsl:variable name="expander" select="false()" />
-    
+
     <xsl:variable name="small-size">
       <xsl:choose>
         <xsl:when test="@small"><xsl:value-of select="@small" /></xsl:when>
         <xsl:otherwise><xsl:value-of select="$column-count" /></xsl:otherwise>
       </xsl:choose>
-    </xsl:variable>    
+    </xsl:variable>
     <xsl:variable name="large-size">
       <xsl:choose>
         <xsl:when test="@large"><xsl:value-of select="@large" /></xsl:when>
@@ -113,7 +126,7 @@
         <xsl:otherwise><xsl:value-of select="$column-count div $sibling-count" /></xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-    
+
     <th>
       <xsl:attribute name="class">
         <xsl:value-of select="'columns'" />
@@ -130,12 +143,12 @@
         </xsl:if>
       </xsl:attribute>
       <xsl:apply-templates select="@*[name() != 'class']"/>
-      
+
       <table role="presentation">
         <tbody>
           <tr>
             <th><xsl:apply-templates /></th>
-<!--            
+<!--
   // If the column contains a nested row, the .expander class should not be used
   // The == on the first check is because we're comparing a string pulled from $.attr() to a number
   if (largeSize == this.columnCount && col.find('.row, row').length === 0 && (noExpander == undefined || noExpander == "false") ) {
@@ -254,7 +267,7 @@
             </tbody>
           </table>
         </xsl:if>
-        
+
         <xsl:if test="@size-lg">
           <xsl:variable name="size" select="@size-lg" />
           <table role="presentation">
@@ -273,7 +286,7 @@
           </table>
         </xsl:if>
       </xsl:when>
-      
+
       <xsl:otherwise>
         <xsl:variable name="size">
           <xsl:choose>
@@ -327,7 +340,7 @@
             <xsl:apply-templates />
           </th>
           <th class="expander" />
-        </tr>        
+        </tr>
       </tbody>
     </table>
   </xsl:template>
@@ -499,7 +512,7 @@
     <a>
       <xsl:apply-templates select="@target|@href" />
       <xsl:apply-templates />
-    </a>    
+    </a>
   </xsl:template>
 
 </xsl:stylesheet>

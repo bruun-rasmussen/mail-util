@@ -8,6 +8,14 @@
     </xsl:copy>
   </xsl:template>
 
+  <!-- Strip marker elements: -->
+  <xsl:template match="noinky">
+    <xsl:comment> [noinky] </xsl:comment>
+      <xsl:apply-templates select="@*|node()" />
+    <xsl:comment> [/noinky] </xsl:comment>
+  </xsl:template>
+
+  <!-- Strip inky attributes: -->
   <xsl:template match="@size|@size-sm|@size-lg|@small|@large" />
 
   <xsl:template match="*">
