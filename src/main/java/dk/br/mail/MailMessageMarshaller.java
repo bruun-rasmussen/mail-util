@@ -2,19 +2,26 @@ package dk.br.mail;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Part;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jsoup.helper.W3CDom;
 import org.slf4j.Logger;
@@ -31,7 +38,7 @@ public class MailMessageMarshaller
 {
   private static final Logger LOG = LoggerFactory.getLogger(MailMessageMarshaller.class);
 
-  public static Document marshal(Message msg) throws MessagingException
+  public static Document marshal(MimeMessage msg) throws MessagingException
   {
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
     DocumentBuilder db;
@@ -78,7 +85,7 @@ public class MailMessageMarshaller
 
     try
     {
-      _digestMimePart(m, msg);
+      _digestPart(m, msg);
     }
     catch (IOException ex)
     {
@@ -86,9 +93,17 @@ public class MailMessageMarshaller
     }
   }
 
-  private void _digestMimePart(Element m, Part p) throws MessagingException, IOException
+  private static final Pattern CID_PATTERN = Pattern.compile("<(?<cid>.*)>");
+
+  private void _digestPart(Element m, Part p) throws MessagingException, IOException
   {
-    if (p.isMimeType("text/html"))
+    if (p.isMimeType("multipart/alternative") || p.isMimeType("multipart/related") || p.isMimeType("multipart/mixed"))
+    {
+      MimeMultipart mm = (MimeMultipart)p.getContent();
+      for (int i = 0; i < mm.getCount(); i++)
+        _digestPart(m, mm.getBodyPart(i));
+    }
+    else if (p.isMimeType("text/html"))
     {
       String htmlBody = _CRLF((String)p.getContent());
       Document htmlDoc = _parseHtml(htmlBody);
@@ -98,29 +113,33 @@ public class MailMessageMarshaller
     else if (p.isMimeType("text/plain"))
     {
       String plainbody = _CRLF((String)p.getContent());
-      _addText(m, "plain-body", plainbody);
+      _addCData(m, "plain-body", plainbody);
     }
-    else if (p.isMimeType("multipart/alternative"))
+    else if (p instanceof MimeBodyPart)
     {
-      MimeMultipart mm = (MimeMultipart)p.getContent();
-      for (int i = 0; i < mm.getCount(); i++)
-        _digestMimePart(m, mm.getBodyPart(i));
-    }
-    else if (p.isMimeType("multipart/related"))
-    {
-      MimeMultipart mm = (MimeMultipart)p.getContent();
-      for (int i = 0; i < mm.getCount(); i++)
-        _digestMimePart(m, mm.getBodyPart(i));
-    }
-    else if (p.isMimeType("multipart/mixed"))
-    {
-      MimeMultipart mm = (MimeMultipart)p.getContent();
-      for (int i = 0; i < mm.getCount(); i++)
-        _digestMimePart(m, mm.getBodyPart(i));
+      MimeBodyPart mbp = (MimeBodyPart)p;
+
+      String base64cdata;
+      InputStream is = mbp.getInputStream();
+      try {
+        byte content[] = IOUtils.toByteArray(is);
+        base64cdata = new String(Base64.encodeBase64(content, true));
+      }
+      finally {
+        is.close();
+      }
+      Element rel = _addElement(m, "related");
+
+      Matcher cid = CID_PATTERN.matcher(mbp.getContentID());
+      if (cid.matches())
+        rel.setAttribute("id", cid.group("cid"));
+      _addText(rel, "type", mbp.getContentType());
+      _addText(rel, "disposition", mbp.getDisposition());
+      _addCData(rel, "content", base64cdata);
     }
     else
     {
-      LOG.info("'{}' ignored", p.getContentType());
+      LOG.info("{}: '{}' {} ignored", ((MimeBodyPart)p).getContentID(), p.getContentType(), p.getClass().getName());
     }
   }
 
@@ -212,12 +231,22 @@ public class MailMessageMarshaller
     return element;
   }
 
-  private static void _addText(Node parentNode, String elementName, String text)
+  private static Element _addCData(Node parentNode, String elementName, String text)
   {
     if (StringUtils.isBlank(text))
-      return;
+      return null;
+    Element e = _addElement(parentNode, elementName);
+    e.appendChild(e.getOwnerDocument().createCDATASection(text));
+    return e;
+  }
+
+  private static Element _addText(Node parentNode, String elementName, String text)
+  {
+    if (StringUtils.isBlank(text))
+      return null;
     Element e = _addElement(parentNode, elementName);
     e.appendChild(e.getOwnerDocument().createTextNode(text));
+    return e;
   }
 
   private static void _addDate(Node parentNode, String elementName, Date d)
@@ -242,7 +271,9 @@ public class MailMessageMarshaller
     org.jsoup.nodes.Document soupDoc = org.jsoup.Jsoup.parse(html);
     try {
       W3CDom domParser = new org.jsoup.helper.W3CDom();
-      return domParser.fromJsoup(soupDoc);
+      Document htmlDoc = domParser.fromJsoup(soupDoc);
+      // Run a little pre-processing here?
+      return htmlDoc;
     }
     catch (DOMException ex) {
       try {
