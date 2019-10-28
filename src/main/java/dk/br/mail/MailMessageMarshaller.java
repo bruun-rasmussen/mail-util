@@ -118,28 +118,33 @@ public class MailMessageMarshaller
     else if (p instanceof MimeBodyPart)
     {
       MimeBodyPart mbp = (MimeBodyPart)p;
-
-      String base64cdata;
-      InputStream is = mbp.getInputStream();
-      try {
-        byte content[] = IOUtils.toByteArray(is);
-        base64cdata = new String(Base64.encodeBase64(content, true));
+      String contentID = mbp.getContentID();
+      if (contentID == null) {
+        LOG.info("'{}' {} with null Content-ID - ignored", p.getContentType(), p.getClass().getName());
       }
-      finally {
-        is.close();
-      }
-      Element rel = _addElement(m, "related");
+      else {
+        String base64cdata;
+        InputStream is = mbp.getInputStream();
+        try {
+          byte content[] = IOUtils.toByteArray(is);
+          base64cdata = new String(Base64.encodeBase64(content, true));
+        }
+        finally {
+          is.close();
+        }
 
-      Matcher cid = CID_PATTERN.matcher(mbp.getContentID());
-      if (cid.matches())
-        rel.setAttribute("id", cid.group("cid"));
-      _addText(rel, "type", mbp.getContentType());
-      _addText(rel, "disposition", mbp.getDisposition());
-      _addCData(rel, "content", base64cdata);
+        Element rel = _addElement(m, "related");
+        Matcher cid = CID_PATTERN.matcher(contentID);
+        if (cid.matches())
+          rel.setAttribute("id", cid.group("cid"));
+        _addText(rel, "type", mbp.getContentType());
+        _addText(rel, "disposition", mbp.getDisposition());
+        _addCData(rel, "content", base64cdata);
+      }
     }
     else
     {
-      LOG.info("{}: '{}' {} ignored", ((MimeBodyPart)p).getContentID(), p.getContentType(), p.getClass().getName());
+      LOG.info("'{}' {} ignored", p.getContentType(), p.getClass().getName());
     }
   }
 
