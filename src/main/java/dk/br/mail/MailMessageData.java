@@ -438,7 +438,7 @@ public final class MailMessageData
         Map.Entry e = (Map.Entry)relatedParts.next();
         String partId = (String)e.getKey();
         MailPartSource res = (MailPartSource)e.getValue();
-        LOG.debug("attaching related MIME-part <" + partId + ">: " + res);
+        LOG.debug("attaching related MIME-part <{}>: {}", partId, res);
 
         BodyPart relatedBodyPart = new MimeBodyPart();
         try {
@@ -450,10 +450,10 @@ public final class MailMessageData
         }
         catch (MessagingException ex) {
           if (failsafe) {
-            LOG.error("failed to attach MIME-part <" + partId + ">: " + res, ex);
+            LOG.error("failed to attach MIME-part <{}>: {}", partId, res, ex);
           }
           else {
-            LOG.warn(ex.getMessage() + " - failed to attach MIME-part <" + partId + ">: " + res);
+            LOG.warn("{} - failed to attach MIME-part <{}>: {}", ex.getMessage(), partId, res);
             throw ex;
           }
         }
