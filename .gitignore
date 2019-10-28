@@ -8,6 +8,11 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 
+# Output from test suite (should really be moved elsewhere)
+*.html
+*-doc.xml
+*-res.eml
+
 # Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
 !/.mvn/wrapper/maven-wrapper.jar
 /nbproject/
