@@ -541,14 +541,16 @@ public class MailMessageParser
         // bug in Apple Mail.)
         // See https://blog.mailtrap.io/2018/11/02/embedding-images-in-html-email-have-the-rules-changed/
         String inlineBase64 = inlineData(urlText);
-        elem.removeAttribute(attrName);
+        if (attrName != null)
+          elem.removeAttribute(attrName);
         elem.setAttribute(resourceAttribute, inlineBase64);
       }
       else if (!"false".equals(embed)) {
         // Embed resource as related MIME part. Replace the URL value by
         // intra-mail 'cid:'-... reference:
         String cidRef = _cidReference(urlText);
-        elem.removeAttribute(attrName);
+        if (attrName != null)
+          elem.removeAttribute(attrName);
         elem.setAttribute(resourceAttribute, cidRef);
       }
       // Otherwise, just leave resource URL as is
