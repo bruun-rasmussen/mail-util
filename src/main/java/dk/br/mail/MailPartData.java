@@ -13,6 +13,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.activation.DataHandler;
@@ -133,8 +135,16 @@ public abstract class MailPartData implements MailPartSource, Serializable
   private static URLConnection _connect(URL url)
       throws IOException
   {
-    int redirects = 0;
+    Set<URL> seen = new HashSet();
+
     while (url.getProtocol().startsWith("http")) {
+      // Check for loops and overlong chains of redirects:
+      if (seen.contains(url))
+        throw new IOException("redirect loop");
+      if (seen.size() > 10)
+        throw new IOException("too many redirects");
+      seen.add(url);
+
       // https://stackoverflow.com/a/26046079/442782
       HttpURLConnection conn = (HttpURLConnection)url.openConnection();
       conn.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Thunderbird/45.8.0");
@@ -147,10 +157,12 @@ public abstract class MailPartData implements MailPartSource, Serializable
         res = conn.getResponseCode();
       }
       catch (SSLException ex) {
+        // conn.disconnect(); here?
         if ("https".equals(url.getProtocol()) && url.getPort() == -1) {
           URL retryUrl = new URL(url.toString().replaceFirst("^https:", "http:"));
           LOG.warn("{} - {}, retry {}", url, ex.getMessage(), retryUrl);
-          return _connect(retryUrl);
+          url = retryUrl;
+          continue;
         }
         throw ex;
       }
@@ -165,9 +177,8 @@ public abstract class MailPartData implements MailPartSource, Serializable
       String location = URLDecoder.decode(conn.getHeaderField("Location"), "UTF-8");
       LOG.info("{} -> {} ({} {})", url, location, res, conn.getResponseMessage());
       url = new URL(url, location);  // Deal with relative URLs
-      if (++redirects > 6)
-        throw new IOException("too many redirects");
     }
+
     return url.openConnection();
   }
 
