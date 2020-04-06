@@ -63,6 +63,11 @@ public final class MailMessageData
     m_replyTo.add(address);
   }
 
+  public void addReplyTo(String name, String email)
+  {
+    addReplyTo(encodeAddress(name, email));
+  }
+
   public String getSubject()
   {
     return m_subject;
