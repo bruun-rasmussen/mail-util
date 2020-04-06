@@ -50,13 +50,6 @@
     </dependency>
 
     <dependency>
-      <groupId>dk.br</groupId>
-      <artifactId>zurb-email</artifactId>
-      <version>0.1.18</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
         <groupId>com.icegreen</groupId>
         <artifactId>greenmail</artifactId>
         <version>1.5.10</version>

@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import javax.xml.transform.OutputKeys;
@@ -59,9 +60,9 @@ public class Inky
     inky1 = _loadXsl(getClass().getResource("inky-1.xsl"));
     inky2 = _loadXsl(getClass().getResource("inky-2.xsl"));
 
-    URL mq_css = getClass().getClassLoader().getResource("dk/br/zurb/mail/css/mq.css");
+    URL mq_css = _getResource(System.getProperty("inky.outline-css", "dk/br/zurb/inky/email.css"));
     responsiveOutlineCss = _loadText(mq_css);
-    URL app_css = getClass().getClassLoader().getResource("dk/br/zurb/mail/css/app.css");
+    URL app_css = _getResource(System.getProperty("inky.styling-css", "dk/br/zurb/inky/email-inlined.css"));
     inlinedStylingCss = _loadText(app_css);
     htmlEncoding = "UTF-8";
 
@@ -78,6 +79,24 @@ public class Inky
       LOG.error("{} failed to load", app_css, ex);
       throw new RuntimeException(ex);
     }
+  }
+
+  private URL _getResource(String sourceUri) {
+    try {
+      URI src = new URI(sourceUri);
+
+      if (src.isAbsolute())
+        return src.toURL();
+    }
+    catch (Exception ex) {
+      throw new IllegalArgumentException(sourceUri + " - " + ex.getMessage());
+    }
+
+    URL res = getClass().getClassLoader().getResource(sourceUri);
+    if (res == null)
+      throw new IllegalArgumentException(sourceUri + " not found in classpath");
+
+    return res;
   }
 
   private Templates _loadXsl(URL res)
