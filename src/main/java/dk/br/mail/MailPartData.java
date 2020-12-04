@@ -11,7 +11,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -174,7 +173,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
         return conn;
       }
 
-      String location = URLDecoder.decode(conn.getHeaderField("Location"), "UTF-8");
+      String location = conn.getHeaderField("Location");
       LOG.info("{} -> {} ({} {})", url, location, res, conn.getResponseMessage());
       url = new URL(url, location);  // Deal with relative URLs
     }
