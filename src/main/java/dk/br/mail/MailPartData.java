@@ -136,7 +136,11 @@ public abstract class MailPartData implements MailPartSource, Serializable
   {
     Set<URL> seen = new HashSet();
 
-    while (url.getProtocol().startsWith("http")) {
+    // Loop to follow redirects:
+    for (;;) {
+      if (!url.getProtocol().startsWith("http"))
+        return url.openConnection();
+
       // Check for loops and overlong chains of redirects:
       if (seen.contains(url))
         throw new IOException("redirect loop");
@@ -165,20 +169,21 @@ public abstract class MailPartData implements MailPartSource, Serializable
         }
         throw ex;
       }
-      if (res != 301 && res != 302) {
-        if (res == 200)
-          LOG.debug("{} ({} {})", url, res, conn.getResponseMessage());
-        else
-          LOG.info("{} ({} {})", url, res, conn.getResponseMessage());
-        return conn;
+
+      if (res == 301 || res == 302) {
+        String location = conn.getHeaderField("Location");
+        LOG.info("Redirect ({} {}) {} \u9192 {}", res, conn.getResponseMessage(), url, location);
+        url = new URL(url, location);  // Deal with relative URLs
+        continue;
       }
 
-      String location = conn.getHeaderField("Location");
-      LOG.info("{} -> {} ({} {})", url, location, res, conn.getResponseMessage());
-      url = new URL(url, location);  // Deal with relative URLs
-    }
+      if (res == 200)
+        LOG.debug("{} ({} {})", url, res, conn.getResponseMessage());
+      else
+        LOG.info("{} ({} {})", url, res, conn.getResponseMessage());
 
-    return url.openConnection();
+      return conn;
+    }
   }
 
   private static BinaryData _read(URL url)
