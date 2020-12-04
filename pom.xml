@@ -15,6 +15,12 @@
     manipulating MIME-formatted e-mail
   </description>
 
+  <scm>
+    <developerConnection>
+      scm:git:ssh://github.com/bruun-rasmussen/mail-util.git
+    </developerConnection>
+  </scm>
+
   <properties>
     <maven.compiler.source>1.6</maven.compiler.source>
     <maven.compiler.target>1.6</maven.compiler.target>
