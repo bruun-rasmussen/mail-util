@@ -134,7 +134,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
   private static URLConnection _connect(URL url)
       throws IOException
   {
-    Set<URL> seen = new HashSet();
+    Set<String> seen = new HashSet();
 
     // Loop to follow redirects:
     for (;;) {
@@ -142,11 +142,12 @@ public abstract class MailPartData implements MailPartSource, Serializable
         return url.openConnection();
 
       // Check for loops and overlong chains of redirects:
-      if (seen.contains(url))
+      String urlText = url.toString();
+      if (seen.contains(urlText))
         throw new IOException("redirect loop");
       if (seen.size() > 10)
         throw new IOException("too many redirects");
-      seen.add(url);
+      seen.add(urlText);
 
       // https://stackoverflow.com/a/26046079/442782
       HttpURLConnection conn = (HttpURLConnection)url.openConnection();
