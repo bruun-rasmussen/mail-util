@@ -218,8 +218,6 @@ public class Inky
   private static void patch(Element e, NodeData css)
   {
     String s = e.getAttribute("style");
-    if (s == null)
-      s = "";
     for (String prop : css.getPropertyNames())
     {
       if (prop == null)
