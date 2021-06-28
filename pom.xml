@@ -25,6 +25,9 @@
     <maven.compiler.source>1.6</maven.compiler.source>
     <maven.compiler.target>1.6</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- Pin deploy plugin at 2.8.2, as 3.0+ since incompatible with our Artifactory -->
+    <dep.plugin.deploy.version>2.8.2</dep.plugin.deploy.version>
   </properties>
 
   <dependencies>
