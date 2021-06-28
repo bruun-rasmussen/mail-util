@@ -127,7 +127,7 @@ public class MailMessageMarshaller
         InputStream is = mbp.getInputStream();
         try {
           byte content[] = IOUtils.toByteArray(is);
-          base64cdata = new String(Base64.encodeBase64(content, true));
+          base64cdata = new String(Base64.encodeBase64(content, true), "iso-8859-1");
         }
         finally {
           is.close();

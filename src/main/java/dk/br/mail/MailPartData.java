@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -83,7 +84,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
     String contentType = m.group("contentType");
     boolean decodeBase64 = ";base64".equals(m.group("encoding"));
     String payload = m.group("payload");
-    byte content[] = decodeBase64 ? Base64.decodeBase64(payload) : payload.getBytes();
+    byte content[] = decodeBase64 ? Base64.decodeBase64(payload) : payload.getBytes(Charset.defaultCharset());
     LOG.debug("[{}] {} byte(s)", contentType, content.length);
     return new BinaryData(contentType, "inline-data", content);
   }
