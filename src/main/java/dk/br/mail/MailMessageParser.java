@@ -255,16 +255,20 @@ public class MailMessageParser
     Element address = (Element)element.getElementsByTagName("email-address").item(0);
     if (address == null)
       throw new IllegalArgumentException("'" + element.getTagName() + "' email-address is missing");
+    String addrText = _text(address);
+    if (StringUtils.isBlank(addrText))
+      throw new IllegalArgumentException("'" + element.getTagName() + "' email-address is blank");
 
     Element personal = (Element)element.getElementsByTagName("personal").item(0);
+    String personText = personal == null ? null : _text(personal);
     try
     {
-      InternetAddress addr = new InternetAddress(_text(address), personal == null ? null : _text(personal));
+      InternetAddress addr = new InternetAddress(addrText, personText);
       try {
         addr.validate();
       }
       catch (AddressException ex) {
-        throw new IllegalArgumentException("unparseable email-address - " + ex.getMessage());
+        throw new IllegalArgumentException("'" + element.getTagName() + "' email-address unparseable - " + ex.getMessage());
       }
       return addr;
     }
@@ -274,7 +278,7 @@ public class MailMessageParser
     }
   }
 
-  private final static Pattern CSS_URL_PATTERN = Pattern.compile("(?<before>.*)url\\((?<url>[^\\)]+)\\)(?<after>.*)");
+  private final static Pattern CSS_URL_PATTERN = Pattern.compile("(?<before>.*url\\(['\"]?)(?<url>[^\\)'\"]+)(?<after>['\"]?\\).*)");
 
   private static class HtmlPartParser
   {
@@ -310,7 +314,7 @@ public class MailMessageParser
       // images, etc.) as we go:
       digestHtmlNodeList(bodyNodes);
 
-      LOG.info("HTML digested: {} part ids, {} content parts", m_resourcePartIds.size(), m_resourceContent.size());
+      LOG.debug("HTML digested: {} part ids, {} content parts", m_resourcePartIds.size(), m_resourceContent.size());
 
       // Serialize the modified HTML back to text:
       String bodyText = _htmlText(bodyNodes, htmlEncoding, seenInky, useCssInliner);
@@ -467,8 +471,7 @@ public class MailMessageParser
       String newStyle = digestStyleUrls(oldStyle);
       if (!oldStyle.equals(newStyle))
       {
-        if (LOG.isDebugEnabled())
-          LOG.debug("### STYLE FIXUP: \"{}\" -> \"{}\"", oldStyle, newStyle);
+        LOG.debug("### STYLE FIXUP: \"{}\" -> \"{}\"", oldStyle, newStyle);
         attr.setValue(newStyle);
       }
     }
@@ -521,7 +524,7 @@ public class MailMessageParser
             if (binaryContent == null)
             {
               String binaryContentBase64 = _text(tag);
-              byte bytes[] = Base64.decodeBase64(binaryContentBase64.getBytes());
+              byte bytes[] = Base64.decodeBase64(binaryContentBase64.getBytes("iso-8859-1"));
               binaryContent = MailPartData.from(contentType, md5, bytes);
               m_resourceContent.put(urlText, binaryContent);
             }

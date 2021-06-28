@@ -100,7 +100,10 @@ public abstract class MailPartData implements MailPartSource, Serializable
   {
     if (href.startsWith("res:"))
     {
-      URL url = MailPartData.class.getClassLoader().getResource(href.substring("res:".length()));
+      String name = href.substring("res:".length());
+      URL url = MailPartData.class.getClassLoader().getResource(name);
+      if (url == null)
+        throw new IOException(name + ": not found");
       return local(url);
     }
     else if (href.startsWith("file:") || href.startsWith("jar:"))
@@ -138,6 +141,9 @@ public abstract class MailPartData implements MailPartSource, Serializable
 
     // Loop to follow redirects:
     for (;;) {
+      LOG.debug("connect({})", url);
+      if (url == null)
+        throw new NullPointerException("bad url");
       if (!url.getProtocol().startsWith("http"))
         return url.openConnection();
 
