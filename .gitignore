@@ -12,6 +12,7 @@ buildNumber.properties
 *.html
 *-doc.xml
 *-res.eml
+mailtest.eml
 
 # Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
 !/.mvn/wrapper/maven-wrapper.jar
