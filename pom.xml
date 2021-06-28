@@ -5,15 +5,9 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <!-- parent>
-      <groupId>org.basepom</groupId>
-      <artifactId>basepom8-minimal</artifactId>
-      <version>33</version>
-  </parent -->
-
   <groupId>dk.br.mail</groupId>
   <artifactId>mail-util</artifactId>
-  <version>0.15-SNAPSHOT</version>
+  <version>0.15</version>
 
   <name>E-Mail Helper Classes</name>
   <description>
