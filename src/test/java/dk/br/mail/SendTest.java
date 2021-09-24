@@ -18,9 +18,12 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
-import junit.framework.TestCase;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.W3CDom;
+
+import static org.junit.Assert.*;
+import org.junit.Test;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -30,10 +33,11 @@ import org.w3c.dom.Node;
 /**
  * @author osa
  */
-public class SendTest extends TestCase
+public class SendTest
 {
   private final static Logger LOG = LoggerFactory.getLogger(SendTest.class);
 
+  @Test
   public void testThis() throws IOException, TransformerException, MessagingException {
     URL htmlSrcUrl = getClass().getClassLoader().getResource("dk/br/zurb/mail/br_soegeagent.html");
     Document html = htmlSouped(htmlSrcUrl);
@@ -80,6 +84,8 @@ public class SendTest extends TestCase
     }
 
     String messageId = msg.getMessageID();
+    assertNotNull(messageId);
+
     LOG.info("wrote {}: {}", messageId, mailtest_eml.getAbsolutePath());
   }
 
