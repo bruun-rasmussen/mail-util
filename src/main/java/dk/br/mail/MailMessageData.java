@@ -32,20 +32,21 @@ public final class MailMessageData
 
   private InternetAddress m_sender;
   private InternetAddress m_bounceTo;
-  private final List<InternetAddress> m_from = new LinkedList<InternetAddress>();
-  private final List<InternetAddress> m_replyTo = new LinkedList<InternetAddress>();
-  private final List<InternetAddress> m_recipientsTo = new LinkedList<InternetAddress>();
-  private final List<InternetAddress> m_recipientsCc = new LinkedList<InternetAddress>();
-  private final List<InternetAddress> m_recipientsBcc = new LinkedList<InternetAddress>();
+  private final List<InternetAddress> m_from = new LinkedList();
+  private final List<InternetAddress> m_replyTo = new LinkedList();
+  private final List<InternetAddress> m_recipientsTo = new LinkedList();
+  private final List<InternetAddress> m_recipientsCc = new LinkedList();
+  private final List<InternetAddress> m_recipientsBcc = new LinkedList();
   private String m_messageID;
   private Date m_sentDate = new Date();
   private String m_subject = "(no subject)";
   private String m_plainText;
   private String m_htmlText;
   private MailPartSource m_alternative;
-  private final Map<String,MailPartSource> m_relatedBodyParts = new HashMap<String,MailPartSource>();
-  private final Map<String,String> m_customHeaders = new HashMap<String,String>();
-  private final List<MailPartSource> m_attachments = new LinkedList<MailPartSource>();
+  private final Map<String,MailPartSource> m_relatedBodyParts = new HashMap();
+  private final Map<String,String> m_customHeaders = new HashMap();
+  private final List<MailPartSource> m_attachments = new LinkedList();
+
   @Override
   public String getCustomHeader(String name)
   {
