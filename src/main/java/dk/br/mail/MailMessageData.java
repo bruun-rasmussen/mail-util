@@ -38,7 +38,7 @@ public final class MailMessageData
   private final List<InternetAddress> m_recipientsCc = new LinkedList();
   private final List<InternetAddress> m_recipientsBcc = new LinkedList();
   private String m_messageID;
-  private Date m_sentDate = new Date();
+  private Date m_sentDate;
   private String m_subject = "(no subject)";
   private String m_plainText;
   private String m_htmlText;
@@ -268,7 +268,8 @@ public final class MailMessageData
     {
       MimeMessage message = new MimeMessage(session);
 
-      message.setSentDate(m_sentDate);
+      if (m_sentDate != null)
+        message.setSentDate(m_sentDate);
       message.addFrom(toAddressArray(m_from));
       if (m_sender != null)
       {
