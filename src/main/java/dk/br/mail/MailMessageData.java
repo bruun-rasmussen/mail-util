@@ -46,6 +46,11 @@ public final class MailMessageData
   private final Map<String,MailPartSource> m_relatedBodyParts = new HashMap<String,MailPartSource>();
   private final Map<String,String> m_customHeaders = new HashMap<String,String>();
   private final List<MailPartSource> m_attachments = new LinkedList<MailPartSource>();
+  @Override
+  public String getCustomHeader(String name)
+  {
+    return m_customHeaders.get(name);
+  }
 
   @Override
   public void setCustomHeader(String name, String value)
@@ -86,6 +91,11 @@ public final class MailMessageData
   public void setMessageID(String messageID)
   {
     m_messageID = messageID;
+  }
+
+  public Date getSentDate()
+  {
+    return m_sentDate;
   }
 
   public void setSentDate(Date date)
@@ -476,6 +486,13 @@ public final class MailMessageData
     return !m_recipientsTo.isEmpty() ? m_recipientsTo.get(0) :
             !m_recipientsCc.isEmpty() ? m_recipientsCc.get(0) :
             !m_recipientsBcc.isEmpty() ? m_recipientsBcc.get(0) : null;
+  }
+
+  @Override
+  public InternetAddress getFirstSender()
+  {
+    return !m_from.isEmpty() ? m_from.get(0) :
+            m_sender != null ? m_sender : m_bounceTo;
   }
 
   @Override
