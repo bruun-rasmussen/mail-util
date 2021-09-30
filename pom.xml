@@ -1,13 +1,12 @@
 <?xml version="1.0"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>dk.br.mail</groupId>
   <artifactId>mail-util</artifactId>
-  <version>0.17-SNAPSHOT</version>
+  <version>0.17</version>
 
   <name>E-Mail Helper Classes</name>
   <description>
@@ -19,6 +18,7 @@
     <developerConnection>
       scm:git:ssh://github.com/bruun-rasmussen/mail-util.git
     </developerConnection>
+    <tag>mail-util-0.17</tag>
   </scm>
 
   <properties>
@@ -115,5 +115,18 @@
     </dependency>
 
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>Smartifact-releases</id>
+      <url>http://artifactory.bruun-rasmussen.dk/artifactory/libs-release-local</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 
 </project>
