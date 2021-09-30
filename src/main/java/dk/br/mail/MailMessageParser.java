@@ -29,6 +29,8 @@ public class MailMessageParser
 {
   private final static Logger LOG = LoggerFactory.getLogger(MailMessageParser.class);
 
+  private final Stack<Map<String,String>> m_tags = new Stack();
+
   private MailMessageParser()
   {
   }
@@ -36,35 +38,54 @@ public class MailMessageParser
   public static MailMessageData[] parseMails(Node mailListNode)
     throws IOException
   {
-    MailMessageParser parser = new MailMessageParser();
-
     List<MailMessageData> result = new LinkedList();
-    NodeList mailListNodes = mailListNode.getChildNodes();
-    for (int j = 0; j < mailListNodes.getLength(); j++)
-    {
-      Node mailItem = mailListNodes.item(j);
-      if ("email-list".equals(mailItem.getNodeName()))
+    new MailMessageParser().appendMails(mailListNode, result);
+    return result.toArray(new MailMessageData[result.size()]);
+  }
+
+  private void appendMails(Node mailListNode, List<MailMessageData> result) throws IOException
+  {
+    m_tags.push(new HashMap<String, String>());
+    try {
+      NodeList mailListNodes = mailListNode.getChildNodes();
+      for (int j = 0; j < mailListNodes.getLength(); j++)
       {
-        LOG.debug("### parsing {}", mailItem.getNodeName());
-        NodeList mailNodes = mailItem.getChildNodes();
-        for (int i = 0; i < mailNodes.getLength(); i++)
+        Node mailItem = mailListNodes.item(j);
+        if ("email-list".equals(mailItem.getNodeName()))
         {
-          Node mailNode = mailNodes.item(i);
-          if ("email".equals(mailNode.getNodeName()))
-          {
-            MailMessageData msg = parser.tryParseMail((Element)mailNode);
-            result.add(msg);
-          }
+          LOG.debug("### parsing {}", mailItem.getNodeName());
+          appendMails(mailItem, result);
+        }
+        else if ("email".equals(mailItem.getNodeName()))
+        {
+          MailMessageData msg = tryParseMail((Element)mailItem);
+          result.add(msg);
+        }
+        else if ("tag".equalsIgnoreCase(mailItem.getNodeName()))
+        {
+          digestUrlTag((Element)mailItem);
+        }
+        else if (mailItem.getNodeType() == Node.COMMENT_NODE)
+        {
+          LOG.info("\"{}\" - comment ignored", ((Comment)mailItem).getTextContent());
+        }
+        else
+        {
+          LOG.warn("unknown {}", mailItem);
         }
       }
-      else if ("email".equals(mailItem.getNodeName()))
-      {
-        MailMessageData msg = parser.tryParseMail((Element)mailItem);
-        result.add(msg);
-      }
     }
+    finally {
+      m_tags.pop().clear();
+    }
+  }
 
-    return result.toArray(new MailMessageData[result.size()]);
+  private void digestUrlTag(Node node)
+  {
+    String name = ((Element)node).getAttribute("name");
+    String value = ((Element)node).getAttribute("value");
+    String was = m_tags.peek().put(name, value);
+    LOG.info("TAG {}=\"{}\" (was {})", name, value, was);
   }
 
   /**
@@ -278,9 +299,12 @@ public class MailMessageParser
     }
   }
 
-  private final static Pattern CSS_URL_PATTERN = Pattern.compile("(?<before>.*url\\(['\"]?)(?<url>[^\\)'\"]+)(?<after>['\"]?\\).*)");
+  private static final Pattern CSS_URL_PATTERN = Pattern.compile("(?<before>.*url\\(['\"]?)(?<url>[^\\)'\"]+)(?<after>['\"]?\\).*)");
 
-  private static class HtmlPartParser
+  private static final Pattern HTTP_URL =
+          Pattern.compile("(?<scheme>https?:)?//(www\\.)?(?<domain>[^/]+)(?<path>/[^?&#;]*)?(?<query>\\?[^#;]*)?(?<suffix>;#.*)?");
+
+  private class HtmlPartParser
   {
     private final String htmlEncoding;
     private final boolean useCssInliner;
@@ -297,8 +321,6 @@ public class MailMessageParser
     final Map<String,String> m_resourcePartIds = new HashMap();
     // <Source URI> -> <Binary Data> map for same
     final Map<String,MailPartSource> m_resourceContent = new HashMap();
-
-    Stack<Map<String,String>> m_tags = new Stack();
 
     private void digest(NodeList bodyNodes, MailMessageData msg, Map<String,MailPartSource> related)
       throws IOException
@@ -338,9 +360,13 @@ public class MailMessageParser
       throws IOException
     {
       m_tags.push(new HashMap<String, String>());
-      for (int i = 0; i < children.getLength(); i++)
-        digestHtmlNode(children.item(i));
-      m_tags.pop().clear();
+      try {
+        for (int i = 0; i < children.getLength(); i++)
+          digestHtmlNode(children.item(i));
+      }
+      finally {
+        m_tags.pop().clear();
+      }
     }
 
     private Map<String,String> getTags() {
@@ -393,8 +419,7 @@ public class MailMessageParser
       }
       else if ("href".equalsIgnoreCase(nodeName) && nodeType == Node.ATTRIBUTE_NODE)
       {
-        String address = ((Attr)node).getValue();
-        LOG.debug("href=\"{}\" (tags: {})", address, getTags());
+        digestHrefAttribute((Attr)node);
       }
       else if (("body".equalsIgnoreCase(nodeName)
           || "table".equalsIgnoreCase(nodeName)
@@ -421,10 +446,7 @@ public class MailMessageParser
       }
       else if ("tag".equalsIgnoreCase(nodeName))
       {
-        String name = ((Element)node).getAttribute("name");
-        String value = ((Element)node).getAttribute("value");
-        String was = m_tags.peek().put(name, value);
-        LOG.info("TAG {}=\"{}\" (was {})", name, value, was);
+        digestUrlTag(node);
       }
       else if ("binary-content".equalsIgnoreCase(nodeName))
       {
@@ -471,9 +493,22 @@ public class MailMessageParser
       String newStyle = digestStyleUrls(oldStyle);
       if (!oldStyle.equals(newStyle))
       {
-        LOG.debug("### STYLE FIXUP: \"{}\" -> \"{}\"", oldStyle, newStyle);
+        LOG.debug("STYLE FIXUP: \"{}\" -> \"{}\"", oldStyle, newStyle);
         attr.setValue(newStyle);
       }
+    }
+
+    private void digestHrefAttribute(Attr attr)
+    {
+      String address = attr.getValue();
+      Matcher m = HTTP_URL.matcher(address);
+      if (!m.matches()) {
+        LOG.debug("### href=\"{}\" not a web URL", address);
+        return;
+      }
+
+      Map<String, String> tags = getTags();
+      LOG.info("### Page link: [{}]//[{}][{}][{}] query: [{}] (tags: {})", m.group("scheme"), m.group("domain"), m.group("path"), m.group("suffix"), m.group("query"), tags);
     }
 
     private String digestStyleUrls(String style)
@@ -482,16 +517,6 @@ public class MailMessageParser
       if (!m.matches())
         return style;
       return digestStyleUrls(m.group("before")) + "url(" + _cidReference(m.group("url")) + ")" + digestStyleUrls(m.group("after"));
-    }
-
-    private static Attr attrIgnoreCase(Element elem, String attr) {
-      NamedNodeMap attrMap = elem.getAttributes();
-      for (int i = 0; i < attrMap.getLength(); i++) {
-        Attr n = (Attr)attrMap.item(i);
-        if (n.getNodeName().equalsIgnoreCase(attr))
-          return n;
-      }
-      return null;
     }
 
     /**
@@ -640,6 +665,16 @@ public class MailMessageParser
       }
       return part;
     }
+  }
+
+  private static Attr attrIgnoreCase(Element elem, String attr) {
+    NamedNodeMap attrMap = elem.getAttributes();
+    for (int i = 0; i < attrMap.getLength(); i++) {
+      Attr n = (Attr)attrMap.item(i);
+      if (n.getNodeName().equalsIgnoreCase(attr))
+        return n;
+    }
+    return null;
   }
 
   private final DateFormat iso8601_ts = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");

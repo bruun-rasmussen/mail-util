@@ -2,6 +2,7 @@ package dk.br.mail;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -25,9 +26,17 @@ public class ParseTest
   private DocumentBuilder db;
 
   @Test
-  public void testGoodMail() throws IOException {
+  public void testGoodMail1() throws IOException {
     testMailParser("OnlineOverbidNotification-mail.xml");
+  }
+
+  @Test
+  public void testGoodMail2() throws IOException {
     testMailParser("OnlineOverbidNotification-mail_ws.xml");
+  }
+
+  @Test
+  public void testGoodMail3() throws IOException {
     testMailParser("mail-merge-sample.xml");
   }
 
@@ -43,7 +52,7 @@ public class ParseTest
 
     MailMessageData[] mailData = MailMessageParser.parseMails(doc);
     assertNotNull(mailData);
-    LOG.info("read {}", mailData);
+    LOG.info("read {}", Arrays.asList(mailData));
   }
 
   private Document parse(URL src) throws IOException {

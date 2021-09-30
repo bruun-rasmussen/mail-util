@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <email-list xmlns:dt="http://xsltsl.org/date-time" xmlns:xalan="http://xml.apache.org/xalan">
+<site name="br">
+  <match domain="*bruun-rasmussen.dk" />
+  <match domain="localhost:*" />
+  <match domain="127.0.0.1:*" />
+</site>
+<tag site="br" name="utm_medium" value="email" />
+<tag site="br" name="utm_source" value="overbid-notify" />
 <email>
 <addresses>
 <from>
