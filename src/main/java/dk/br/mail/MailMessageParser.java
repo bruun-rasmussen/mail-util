@@ -29,63 +29,206 @@ public class MailMessageParser
 {
   private final static Logger LOG = LoggerFactory.getLogger(MailMessageParser.class);
 
-  private final Stack<Map<String,String>> m_tags = new Stack();
+  private final Stack<Map<String,String>> tags = new Stack();
+  private final Set<Pattern> taggedDomains = new HashSet();
+  private final String trackingHeaderName;
+  private final String trackingParameterName;
+  private final char trackingTokenAlphabet[];
+  private final int trackingTokenLength;
 
   private MailMessageParser()
   {
+    Properties config = new Properties();
+    String cfgSpec = System.getenv("MAIL_PARSER_CONFIG");
+    try {
+      URL cfg =
+         StringUtils.isEmpty(cfgSpec) ?
+            MailMessageParser.class.getClassLoader().getResource("dk/br/mail/mail-parser-config.properties") :
+              new URL(cfgSpec);
+      if (cfg != null) {
+        try (InputStream is = cfg.openStream()) {
+          config.load(is);
+          LOG.info("{} loaded", cfg);
+        }
+        catch (IOException ex) {
+          throw new IllegalArgumentException(cfg + " " + ex.getMessage());
+        }
+      }
+    }
+    catch (MalformedURLException ex) {
+      throw new IllegalArgumentException(cfgSpec + " " + ex.getMessage());
+    }
+
+    addTaggedDomains(config.getProperty("mail.tracking.domains", "localhost localhost:* *bruun-rasmussen.dk"));
+    trackingHeaderName = config.getProperty("mail.tracking.header", "X-BR-Tracking-ID");
+    trackingParameterName = config.getProperty("mail.tracking.parameter", "track-id");
+    trackingTokenAlphabet = config.getProperty("mail.tracking.token.alphabet", "BCDFGHJKLMNPQRSTVWXZbcdfghjkmnpqrstvwxz").toCharArray();
+    trackingTokenLength = Integer.parseInt(config.getProperty("mail.tracking.token.length", "10"));
+
+    _pushTagFrame();  // never popped. death by GC.
   }
 
   public static MailMessageData[] parseMails(Node mailListNode)
     throws IOException
   {
     List<MailMessageData> result = new LinkedList();
-    new MailMessageParser().appendMails(mailListNode, result);
+    new MailMessageParser()._appendMails(mailListNode, result);
     return result.toArray(new MailMessageData[result.size()]);
   }
 
-  private void appendMails(Node mailListNode, List<MailMessageData> result) throws IOException
+  private void _appendMails(Node mailListNode, List<MailMessageData> result) throws IOException
   {
-    m_tags.push(new HashMap<String, String>());
-    try {
-      NodeList mailListNodes = mailListNode.getChildNodes();
-      for (int j = 0; j < mailListNodes.getLength(); j++)
+    NodeList mailListNodes = mailListNode.getChildNodes();
+    for (int j = 0; j < mailListNodes.getLength(); j++)
+    {
+      Node mailItem = mailListNodes.item(j);
+      if ("email-list".equals(mailItem.getNodeName()))
       {
-        Node mailItem = mailListNodes.item(j);
-        if ("email-list".equals(mailItem.getNodeName()))
-        {
-          LOG.debug("### parsing {}", mailItem.getNodeName());
-          appendMails(mailItem, result);
-        }
-        else if ("email".equals(mailItem.getNodeName()))
-        {
-          MailMessageData msg = tryParseMail((Element)mailItem);
-          result.add(msg);
-        }
-        else if ("tag".equalsIgnoreCase(mailItem.getNodeName()))
-        {
-          digestUrlTag((Element)mailItem);
-        }
-        else if (mailItem.getNodeType() == Node.COMMENT_NODE)
-        {
-          LOG.info("\"{}\" - comment ignored", ((Comment)mailItem).getTextContent());
-        }
-        else
-        {
-          LOG.warn("unknown {}", mailItem);
-        }
+        LOG.debug("### parsing {}", mailItem.getNodeName());
+        _appendMails(mailItem, result);
       }
-    }
-    finally {
-      m_tags.pop().clear();
+      else if ("email".equals(mailItem.getNodeName()))
+      {
+        MailMessageData msg = tryParseMail((Element)mailItem);
+        result.add(msg);
+      }
+      else if ("tag-domain".equals(mailItem.getNodeName()))
+      {
+        String wc = _text((Element)mailItem);
+        addTaggedDomains(wc);
+      }
+      else if ("tag".equalsIgnoreCase(mailItem.getNodeName()))
+      {
+        digestUrlTag((Element)mailItem);
+      }
+      else if (mailItem.getNodeType() == Node.COMMENT_NODE)
+      {
+        LOG.info("\"{}\" - comment ignored", ((Comment)mailItem).getTextContent());
+      }
+      else if (mailItem.getNodeType() == Node.TEXT_NODE)
+      {
+        String text = ((Text)mailItem).getTextContent();
+        if (!StringUtils.isBlank(text))
+          LOG.info("\"{}\" - text ignored", text);
+      }
+      else
+      {
+        LOG.warn("unknown {}", mailItem);
+      }
     }
   }
 
-  private void digestUrlTag(Node node)
-  {
-    String name = ((Element)node).getAttribute("name");
-    String value = ((Element)node).getAttribute("value");
-    String was = m_tags.peek().put(name, value);
-    LOG.info("TAG {}=\"{}\" (was {})", name, value, was);
+  private void addTaggedDomains(String wcs) {
+    for (String wc : wcs.split("\\s+")) {
+      LOG.info("### [{}]: domain pattern", wc);
+      String rx = wc.replaceAll("[^?*]+", "\\\\Q$0\\\\E").replaceAll("\\?", ".").replaceAll("\\*", ".*");
+      taggedDomains.add(Pattern.compile(rx));
+    }
+  }
+
+
+  private void _pushTagFrame() {
+    tags.push(new LinkedHashMap<String, String>());
+  }
+
+  private void _popTagFrame() {
+    tags.pop().clear();
+  }
+
+  private static final Pattern QUERY_LIST = Pattern.compile("[&?]+");
+
+  private static void splitQueryString(String qs, List<QueryParam> res) {
+    if (!StringUtils.isEmpty(qs))
+      for (String part : QUERY_LIST.split(qs))
+        if (!StringUtils.isBlank(part))
+          res.add(QueryParam.ofPart(part));
+  }
+
+  private static String joinQueryString(List<QueryParam> parts) {
+    if (parts.isEmpty())
+      return "";
+
+    StringBuilder sb = new StringBuilder();
+    try {
+      for (QueryParam p : parts)
+        sb.append(sb.length() == 0 ? "?" : "&")
+          .append(URLEncoder.encode(p.name, "UTF-8"))
+          .append("=")
+          .append(URLEncoder.encode(p.value, "UTF-8"));
+    }
+    catch (UnsupportedEncodingException ex) {
+      throw new RuntimeException(ex);
+    }
+    return sb.toString();
+  }
+
+  private static final Pattern QUERY_PAIR = Pattern.compile("(?<name>[^=]*)(=(?<value>.*))?");
+
+  private static class QueryParam {
+    private final String name;
+    private final String value;
+
+    public QueryParam(String name, String value) {
+      this.name = name;
+      this.value = value;
+    }
+
+    public static QueryParam ofPart(String qsPart) {
+      Matcher m = QUERY_PAIR.matcher(qsPart);
+      if (!m.matches())
+        throw new IllegalArgumentException("'" + qsPart + "': unrecognized query string");
+
+      LOG.debug("'{}' : {}", qsPart, m.group());
+      try {
+        String name = URLDecoder.decode(m.group("name"), "UTF-8");
+        String value = URLDecoder.decode(m.group("value"), "UTF-8");
+        return new QueryParam(name, value);
+      }
+      catch (UnsupportedEncodingException ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+  }
+
+  private String adornQuery(String qs) {
+    Set<String> names = new HashSet();
+    List<QueryParam> parts = new LinkedList();
+    splitQueryString(qs, parts);
+    for (QueryParam p : parts)
+      names.add(p.name);
+
+    for (Map<String, String> t : tags)
+      for (Map.Entry<String, String> e : t.entrySet())
+        if (names.add(e.getKey()))
+          parts.add(new QueryParam(e.getKey(), e.getValue()));
+
+    return joinQueryString(parts);
+  }
+
+  private Map<String,String> _getTags() {
+    Map<String,String> res = new HashMap();
+    for (Map<String, String> t : tags)
+      for (Map.Entry<String, String> e : t.entrySet())
+        if (!res.containsKey(e.getKey()))
+          res.put(e.getKey(), e.getValue());
+    return res;
+  }
+
+  private void putTag(String name, String value) {
+    String was = tags.peek().put(name, value);
+  }
+
+  private void digestUrlTag(Element e) {
+    String name = e.getAttribute("name");
+    String value = _text(e);
+    putTag(name, value);
+  }
+
+  private boolean isAutoTagged(String domain) {
+    for (Pattern p : taggedDomains)
+      if (p.matcher(domain).matches())
+        return true;
+    return false;
   }
 
   /**
@@ -97,93 +240,114 @@ public class MailMessageParser
     return new MailMessageParser().tryParseMail(mailNode);
   }
 
+  private String randomToken() {
+    char tokenChars[] = new char[trackingTokenLength];
+    for (int i = 0; i < trackingTokenLength; i++) {
+      int randomPos = (int)(Math.random() * trackingTokenAlphabet.length);
+      tokenChars[i] = trackingTokenAlphabet[randomPos];
+    }
+    return new String(tokenChars);
+  }
+
   private MailMessageData tryParseMail(Element mailNode)
     throws IOException
   {
-    LOG.debug("###    parsing {}", mailNode.getNodeName());
+    _pushTagFrame();
+    try {
+      String trackingId = mailNode.getAttribute("tracking-id");
+      if (StringUtils.isEmpty(trackingId))
+        trackingId = randomToken();
+      putTag(trackingParameterName, trackingId);
 
-    // Pass 1: read any <related>...</related> mime parts already present, if any, to have
-    // them handy for <xxx src="cid:...") style references in the html part. Relevant only
-    // for XML produced from marshalling an actual existing mime-message:
-    Map<String,MailPartSource> related = parseRelatedParts(mailNode);
+      LOG.debug("###    parsing {}", mailNode.getNodeName());
 
-    MailMessageData msg = new MailMessageData();
+      // Pass 1: read any <related>...</related> mime parts already present, if any, to have
+      // them handy for <xxx src="cid:...") style references in the html part. Relevant only
+      // for XML produced from marshalling an actual existing mime-message:
+      Map<String,MailPartSource> related = parseRelatedParts(mailNode);
 
-    NodeList mailProperties = mailNode.getChildNodes();
-    for (int i = 0; i < mailProperties.getLength(); i++)
-    {
-      Node _node = mailProperties.item(i);
-      if (_node.getNodeType() != Node.ELEMENT_NODE)
-      {
-        LOG.debug("{}({}) ignored", _node, _node.getNodeType());
-        continue;
-      }
+      MailMessageData msg = new MailMessageData();
+      msg.setCustomHeader(trackingHeaderName, trackingId);
 
-      Element propertyNode = (Element)_node;
-      String propertyName = propertyNode.getTagName();
-      if ("subject".equals(propertyName))
+      NodeList mailProperties = mailNode.getChildNodes();
+      for (int i = 0; i < mailProperties.getLength(); i++)
       {
-        String subject = _text(propertyNode);
-        LOG.debug("subject: \"{}\"", subject);
-        msg.setSubject(subject);
-      }
-      else if ("sent".equals(propertyName))
-      {
-        Date sent = _timestamp(propertyNode);
-        LOG.debug("sent: {}", sent);
-        msg.setSentDate(sent);
-      }
-      else if ("plain-body".equals(propertyName))
-      {
-        String body = _text(propertyNode);
-        LOG.debug("text/plain body: {} characters\n{}", body.length(), body);
-        msg.setPlainBody(body);
-      }
-      else if ("html-body".equals(propertyName))
-      {
-        NodeList bodyNodes = propertyNode.getChildNodes();
-        HtmlPartParser parser = new HtmlPartParser();
-        parser.digest(bodyNodes, msg, related);
-      }
-      else if ("addresses".equals(propertyName))
-      {
-        parseAddresses(propertyNode.getChildNodes(), msg);
-      }
-      else if ("header".equals(propertyName))
-      {
-        String name = propertyNode.getAttribute("name");
-        String value = propertyNode.getAttribute("value");
-        if (StringUtils.isEmpty(value))
-          value = _text(propertyNode);
-        LOG.debug("{}: \"{}\"", name, value);
-        msg.setCustomHeader(name, value);
-      }
-      else if ("related".equals(propertyName))
-      {
-        // Do nothing
-        String partId = "cid:" + propertyNode.getAttribute("id");
-        LOG.debug("(seen {} : {})", partId, related.get(partId));
-      }
-      else if ("attachment".equals(propertyName))
-      {
-        String src = propertyNode.getAttribute("src");
-        msg.attach(MailPartData.from(src, null));
-      }
-      else if ("message-id".equals(propertyName))
-      {
-        String messageID = _text(propertyNode);
-        msg.setMessageID(messageID);
-      }
-      else
-      {
-        String value = _text(propertyNode);
-        String unknown = "X-" + StringUtils.capitalize(propertyName);
-        msg.setCustomHeader(unknown, value);
+        Node _node = mailProperties.item(i);
+        if (_node.getNodeType() != Node.ELEMENT_NODE)
+        {
+          LOG.debug("{}({}) ignored", _node, _node.getNodeType());
+          continue;
+        }
 
-        LOG.warn("unknown {}: \"{}\"", unknown, value);
+        Element propertyNode = (Element)_node;
+        String propertyName = propertyNode.getTagName();
+        if ("subject".equals(propertyName))
+        {
+          String subject = _text(propertyNode);
+          LOG.debug("subject: \"{}\"", subject);
+          msg.setSubject(subject);
+        }
+        else if ("sent".equals(propertyName))
+        {
+          Date sent = _timestamp(propertyNode);
+          LOG.debug("sent: {}", sent);
+          msg.setSentDate(sent);
+        }
+        else if ("plain-body".equals(propertyName))
+        {
+          String body = _text(propertyNode);
+          LOG.debug("text/plain body: {} characters\n{}", body.length(), body);
+          msg.setPlainBody(body);
+        }
+        else if ("html-body".equals(propertyName))
+        {
+          NodeList bodyNodes = propertyNode.getChildNodes();
+          HtmlPartParser parser = new HtmlPartParser();
+          parser.digest(bodyNodes, msg, related);
+        }
+        else if ("addresses".equals(propertyName))
+        {
+          parseAddresses(propertyNode.getChildNodes(), msg);
+        }
+        else if ("header".equals(propertyName))
+        {
+          String name = propertyNode.getAttribute("name");
+          String value = propertyNode.getAttribute("value");
+          if (StringUtils.isEmpty(value))
+            value = _text(propertyNode);
+          LOG.debug("{}: \"{}\"", name, value);
+          msg.setCustomHeader(name, value);
+        }
+        else if ("related".equals(propertyName))
+        {
+          // Do nothing
+          String partId = "cid:" + propertyNode.getAttribute("id");
+          LOG.debug("(seen {} : {})", partId, related.get(partId));
+        }
+        else if ("attachment".equals(propertyName))
+        {
+          String src = propertyNode.getAttribute("src");
+          msg.attach(MailPartData.from(src, null));
+        }
+        else if ("message-id".equals(propertyName))
+        {
+          String messageID = _text(propertyNode);
+          msg.setMessageID(messageID);
+        }
+        else
+        {
+          String value = _text(propertyNode);
+          String unknown = "X-" + StringUtils.capitalize(propertyName);
+          msg.setCustomHeader(unknown, value);
+
+          LOG.warn("unknown {}: \"{}\"", unknown, value);
+        }
       }
+      return msg;
     }
-    return msg;
+    finally {
+      _popTagFrame();
+    }
   }
 
   private static Map<String,MailPartSource> parseRelatedParts(Element mailNode) throws IOException
@@ -359,22 +523,14 @@ public class MailMessageParser
     private void digestHtmlNodeList(NodeList children)
       throws IOException
     {
-      m_tags.push(new HashMap<String, String>());
+      _pushTagFrame();
       try {
         for (int i = 0; i < children.getLength(); i++)
           digestHtmlNode(children.item(i));
       }
       finally {
-        m_tags.pop().clear();
+        _popTagFrame();
       }
-    }
-
-    private Map<String,String> getTags() {
-      Map<String,String> tags = new HashMap<String,String>(m_tags.peek());
-      for (Map<String,String> t : m_tags)
-        for (Map.Entry<String, String> s : t.entrySet())
-          tags.put(s.getKey(), s.getValue());
-      return tags;
     }
 
     private void digestHtmlAttributes(NamedNodeMap children)
@@ -444,9 +600,9 @@ public class MailMessageParser
       {
         includeResource(node);
       }
-      else if ("tag".equalsIgnoreCase(nodeName))
+      else if ("tag".equalsIgnoreCase(nodeName) && nodeType == Node.ELEMENT_NODE)
       {
-        digestUrlTag(node);
+        digestUrlTag((Element)node);
       }
       else if ("binary-content".equalsIgnoreCase(nodeName))
       {
@@ -507,8 +663,33 @@ public class MailMessageParser
         return;
       }
 
-      Map<String, String> tags = getTags();
-      LOG.info("### Page link: [{}]//[{}][{}][{}] query: [{}] (tags: {})", m.group("scheme"), m.group("domain"), m.group("path"), m.group("suffix"), m.group("query"), tags);
+      String scheme = m.group("scheme");
+      String domain = m.group("domain");
+      String path = m.group("path");
+      String query = m.group("query");
+      String suffix = m.group("suffix");
+
+      if (isAutoTagged(domain)) {
+        query = adornQuery(query);
+
+        StringBuilder url =
+            new StringBuilder(scheme)
+                .append("//")
+                .append(domain);
+        if (path != null)
+            url.append(path);
+        if (query != null)
+            url.append(query);
+        if (suffix != null)
+            url.append(suffix);
+
+        attr.setValue(url.toString());
+
+        LOG.info("### Tagged link: [{}]//[{}][{}][{}] query: [{}]", scheme, domain, path, suffix, query);
+      }
+      else {
+        LOG.debug("Page link: [{}]//[{}][{}][{}] query: [{}] unchanged", scheme, domain, path, suffix, query);
+      }
     }
 
     private String digestStyleUrls(String style)
