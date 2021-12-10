@@ -16,7 +16,7 @@
 
   <scm>
     <developerConnection>
-      scm:git:ssh://github.com/bruun-rasmussen/mail-util.git
+        scm:git:git@github.com:bruun-rasmussen/mail-util.git
     </developerConnection>
     <tag>mail-util-0.18</tag>
   </scm>
