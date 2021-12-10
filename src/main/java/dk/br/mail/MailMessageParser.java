@@ -149,16 +149,11 @@ public class MailMessageParser
       return "";
 
     StringBuilder sb = new StringBuilder();
-    try {
-      for (QueryParam p : parts)
-        sb.append(sb.length() == 0 ? "?" : "&")
-          .append(URLEncoder.encode(p.name, "UTF-8"))
-          .append("=")
-          .append(URLEncoder.encode(p.value, "UTF-8"));
-    }
-    catch (UnsupportedEncodingException ex) {
-      throw new RuntimeException(ex);
-    }
+    for (QueryParam p : parts)
+      sb.append(sb.length() == 0 ? "?" : "&")
+        .append(urlEncode(p.name))
+        .append("=")
+        .append(urlEncode(p.value));
     return sb.toString();
   }
 
@@ -179,14 +174,9 @@ public class MailMessageParser
         throw new IllegalArgumentException("'" + qsPart + "': unrecognized query string");
 
       LOG.debug("'{}' : {}", qsPart, m.group());
-      try {
-        String name = URLDecoder.decode(m.group("name"), "UTF-8");
-        String value = URLDecoder.decode(m.group("value"), "UTF-8");
-        return new QueryParam(name, value);
-      }
-      catch (UnsupportedEncodingException ex) {
-        throw new RuntimeException(ex);
-      }
+      String name = urlDecode(m.group("name"));
+      String value = urlDecode(m.group("value"));
+      return new QueryParam(name, value);
     }
   }
 
@@ -945,6 +935,28 @@ public class MailMessageParser
     catch (TransformerException ex)
     {
       throw new RuntimeException("XML serialization error", ex);
+    }
+  }
+
+  private static String urlDecode(String s) {
+    if (StringUtils.isEmpty(s))
+      return "";
+    try {
+      return URLDecoder.decode(s, "UTF-8");
+    }
+    catch (UnsupportedEncodingException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+
+  private static String urlEncode(String s) {
+    if (StringUtils.isEmpty(s))
+      return "";
+    try {
+      return URLEncoder.encode(s, "UTF-8");
+    }
+    catch (UnsupportedEncodingException ex) {
+      throw new RuntimeException(ex);
     }
   }
 }
