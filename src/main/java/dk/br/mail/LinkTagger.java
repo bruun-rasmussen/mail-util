@@ -25,6 +25,14 @@ public class LinkTagger
 
   private final Stack<Map<String,String>> tags = new Stack();
 
+  public LinkTagger() {
+    _init();
+  }
+
+  private void _init() {
+    pushFrame(); // never popped. Death by GC.
+  }
+
   public void pushFrame() {
     tags.push(new LinkedHashMap<String, String>());
   }
@@ -32,7 +40,6 @@ public class LinkTagger
   public void popFrame() {
     tags.pop().clear();
   }
-
 
   public void put(String name, String value) {
     String was = tags.peek().put(name, value);

@@ -65,8 +65,6 @@ public class MailMessageParser
     trackingParameterName = config.getProperty("mail.tracking.parameter", "track-id");
     trackingTokenAlphabet = config.getProperty("mail.tracking.token.alphabet", "BCDFGHJKLMNPQRSTVWXZbcdfghjkmnpqrstvwxz").toCharArray();
     trackingTokenLength = Integer.parseInt(config.getProperty("mail.tracking.token.length", "10"));
-
-    tagger.pushFrame();  // never popped. death by GC.
   }
 
   public static MailMessageData[] parseMails(Node mailListNode)
