@@ -375,7 +375,7 @@ public class MailMessageParser
   private static final Pattern CSS_URL_PATTERN = Pattern.compile("(?<before>.*url\\(['\"]?)(?<url>[^\\)'\"]+)(?<after>['\"]?\\).*)");
 
   private static final Pattern HTTP_URL =
-          Pattern.compile("(?<scheme>https?:)?//(www\\.)?(?<domain>[^/]+)(?<path>/[^?&#;]*)?(?<query>\\?[^#;]*)?(?<suffix>;#.*)?");
+          Pattern.compile("(?<scheme>https?:)?//(?<domain>[^/]+)(?<path>/[^?&#;]*)?(?<query>\\?[^#;]*)?(?<suffix>;#.*)?");
 
   private class HtmlPartParser
   {
