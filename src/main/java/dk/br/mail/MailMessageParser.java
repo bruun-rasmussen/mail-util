@@ -150,22 +150,23 @@ public class MailMessageParser
 
     StringBuilder sb = new StringBuilder();
     for (QueryParam p : parts)
-      sb.append(sb.length() == 0 ? "?" : "&")
-        .append(urlEncode(p.name))
-        .append("=")
-        .append(urlEncode(p.value));
+      p.appendTo(sb);
     return sb.toString();
   }
 
-  private static final Pattern QUERY_PAIR = Pattern.compile("(?<name>[^=]*)(=(?<value>.*))?");
+  private static final Pattern QUERY_PAIR = Pattern.compile("(?<name>[^=]*)(?<value>=.*)?");
 
   private static class QueryParam {
     private final String name;
     private final String value;
 
-    public QueryParam(String name, String value) {
+    private QueryParam(String name, String value) {
       this.name = name;
       this.value = value;
+    }
+
+    private void appendTo(StringBuilder sb) {
+      sb.append(sb.length() == 0 ? "?" : "&").append(urlEncode(name)).append(urlEncode(value));
     }
 
     public static QueryParam ofPart(String qsPart) {
@@ -177,6 +178,10 @@ public class MailMessageParser
       String name = urlDecode(m.group("name"));
       String value = urlDecode(m.group("value"));
       return new QueryParam(name, value);
+    }
+
+    public static QueryParam namedValue(String name, String value) {
+      return new QueryParam(name, StringUtils.isEmpty(value) ? "" : "=" + value);
     }
   }
 
@@ -190,18 +195,9 @@ public class MailMessageParser
     for (Map<String, String> t : tags)
       for (Map.Entry<String, String> e : t.entrySet())
         if (names.add(e.getKey()))
-          parts.add(new QueryParam(e.getKey(), e.getValue()));
+          parts.add(QueryParam.namedValue(e.getKey(), e.getValue()));
 
     return joinQueryString(parts);
-  }
-
-  private Map<String,String> _getTags() {
-    Map<String,String> res = new HashMap();
-    for (Map<String, String> t : tags)
-      for (Map.Entry<String, String> e : t.entrySet())
-        if (!res.containsKey(e.getKey()))
-          res.put(e.getKey(), e.getValue());
-    return res;
   }
 
   private void putTag(String name, String value) {
