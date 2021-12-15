@@ -31,7 +31,6 @@ public class MailMessageParser
 
   private final LinkTagger tagger = new LinkTagger();
 
-  private final Set<Pattern> taggedDomains = new HashSet();
   private final String trackingHeaderName;
   private final String trackingParameterName;
   private final char trackingTokenAlphabet[];
@@ -60,7 +59,7 @@ public class MailMessageParser
       throw new IllegalArgumentException(cfgSpec + " " + ex.getMessage());
     }
 
-    addTaggedDomains(config.getProperty("mail.tracking.domains", "localhost localhost:* *bruun-rasmussen.dk"));
+    tagger.addTaggedDomains(config.getProperty("mail.tracking.domains", "localhost localhost:* *bruun-rasmussen.dk"));
     trackingHeaderName = config.getProperty("mail.tracking.header", "X-BR-Tracking-ID");
     trackingParameterName = config.getProperty("mail.tracking.parameter", "track-id");
     trackingTokenAlphabet = config.getProperty("mail.tracking.token.alphabet", "BCDFGHJKLMNPQRSTVWXZbcdfghjkmnpqrstvwxz").toCharArray();
@@ -94,7 +93,7 @@ public class MailMessageParser
       else if ("tag-domain".equals(mailItem.getNodeName()))
       {
         String wc = _text((Element)mailItem);
-        addTaggedDomains(wc);
+        tagger.addTaggedDomains(wc);
       }
       else if ("tag".equalsIgnoreCase(mailItem.getNodeName()))
       {
@@ -117,25 +116,10 @@ public class MailMessageParser
     }
   }
 
-  private void addTaggedDomains(String wcs) {
-    for (String wc : wcs.split("\\s+")) {
-      LOG.info("### [{}]: domain pattern", wc);
-      String rx = wc.replaceAll("[^?*]+", "\\\\Q$0\\\\E").replaceAll("\\?", ".").replaceAll("\\*", ".*");
-      taggedDomains.add(Pattern.compile(rx));
-    }
-  }
-
   private void digestUrlTag(Element e) {
     String name = e.getAttribute("name");
     String value = _text(e);
     tagger.put(name, value);
-  }
-
-  private boolean isAutoTagged(String domain) {
-    for (Pattern p : taggedDomains)
-      if (p.matcher(domain).matches())
-        return true;
-    return false;
   }
 
   /**
@@ -372,9 +356,6 @@ public class MailMessageParser
 
   private static final Pattern CSS_URL_PATTERN = Pattern.compile("(?<before>.*url\\(['\"]?)(?<url>[^\\)'\"]+)(?<after>['\"]?\\).*)");
 
-  private static final Pattern HTTP_URL =
-          Pattern.compile("(?<scheme>https?:)?//(?<domain>[^/]+)(?<path>/[^?&#;]*)?(?<query>\\?[^#;]*)?(?<suffix>;#.*)?");
-
   private class HtmlPartParser
   {
     private final String htmlEncoding;
@@ -563,39 +544,11 @@ public class MailMessageParser
 
     private void digestHrefAttribute(Attr attr)
     {
-      String address = attr.getValue();
-      Matcher m = HTTP_URL.matcher(address);
-      if (!m.matches()) {
-        LOG.debug("### href=\"{}\" not a web URL", address);
-        return;
-      }
-
-      String scheme = m.group("scheme");
-      String domain = m.group("domain");
-      String path = m.group("path");
-      String query = m.group("query");
-      String suffix = m.group("suffix");
-
-      if (isAutoTagged(domain)) {
-        query = tagger.amendQueryString(query);
-
-        StringBuilder url =
-            new StringBuilder(scheme)
-                .append("//")
-                .append(domain);
-        if (path != null)
-            url.append(path);
-        if (query != null)
-            url.append(query);
-        if (suffix != null)
-            url.append(suffix);
-
-        attr.setValue(url.toString());
-
-        LOG.info("### Tagged link: [{}]//[{}][{}][{}] query: [{}]", scheme, domain, path, suffix, query);
-      }
-      else {
-        LOG.debug("Page link: [{}]//[{}][{}][{}] query: [{}] unchanged", scheme, domain, path, suffix, query);
+      String sourceHref = attr.getValue();
+      String taggedHref = tagger.amendHrefAddress(sourceHref);
+      if (!StringUtils.equals(sourceHref, taggedHref)) {
+        attr.setValue(sourceHref);
+        LOG.info("'{}' \u2192 '{}'", sourceHref, taggedHref);
       }
     }
 

@@ -41,8 +41,31 @@ public class LinkTaggerTest
       tagger.put("x", "y");
       tagger.put("utm_source", "Myletter");
       Assert.assertEquals("?utm_medium=email&utm_source=Myletter&x=y", tagger.amendQueryString(""));
+      Assert.assertEquals("?utm_source=ThatLetter&utm_medium=email&x=y", tagger.amendQueryString("?utm_source=ThatLetter"));
       tagger.popFrame();
       Assert.assertEquals("?utm_medium=email&utm_source=Newsletter", tagger.amendQueryString(""));
     }
 
+    @Test
+    public void testHref() throws Exception {
+      tagger.pushFrame();
+      tagger.put("x", "y");
+      tagger.put("utm_source", "Myletter");
+      tagger.addTaggedDomains("example.com *.example.com");
+
+      _unchangedHref("ftp://example.com/~/files");
+      _amendedHref("http://example.com/files", "http://example.com/files?utm_medium=email&utm_source=Myletter&x=y");
+      _amendedHref("http://some.subdomain.example.com/files", "http://some.subdomain.example.com/files?utm_medium=email&utm_source=Myletter&x=y");
+      _unchangedHref("http://example.org/~/files");
+
+      tagger.popFrame();
+    }
+
+    private void _unchangedHref(String href) {
+      Assert.assertEquals(href, tagger.amendHrefAddress(href));
+    }
+
+    private void _amendedHref(String source, String amended) {
+      Assert.assertEquals(amended, tagger.amendHrefAddress(source));
+    }
 }

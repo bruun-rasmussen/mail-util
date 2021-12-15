@@ -3,12 +3,14 @@ package dk.br.mail;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
@@ -23,6 +25,7 @@ public class LinkTagger
   private static final Logger LOG = LoggerFactory.getLogger(LinkTagger.class);
 
   private final LinkedList<Map<String,String>> tags = new LinkedList();
+  private final Set<Pattern> taggedDomains = new HashSet();
 
   public LinkTagger() {
     _init();
@@ -150,5 +153,58 @@ public class LinkTagger
     catch (UnsupportedEncodingException ex) {
       throw new RuntimeException(ex);
     }
+  }
+
+  public void addTaggedDomains(String wcs) {
+    for (String wc : wcs.split("\\s+")) {
+      LOG.info("### [{}]: domain pattern", wc);
+      String rx = wc.replaceAll("[^?*]+", "\\\\Q$0\\\\E").replaceAll("\\?", ".").replaceAll("\\*", ".*");
+      taggedDomains.add(Pattern.compile(rx));
+    }
+  }
+
+  private boolean isAutoTagged(String domain) {
+    for (Pattern p : taggedDomains)
+      if (p.matcher(domain).matches())
+        return true;
+    return false;
+  }
+
+  private static final Pattern HTTP_URL =
+          Pattern.compile("(?<scheme>https?:)?//(?<domain>[^/]+)(?<path>/[^?&#;]*)?(?<query>\\?[^#;]*)?(?<suffix>;#.*)?");
+
+  public String amendHrefAddress(String address) {
+    Matcher m = HTTP_URL.matcher(address);
+    if (!m.matches()) {
+      LOG.debug("### href=\"{}\" not a web URL", address);
+      return address;
+    }
+
+    String scheme = m.group("scheme");
+    String domain = m.group("domain");
+    String path = m.group("path");
+    String query = m.group("query");
+    String suffix = m.group("suffix");
+
+    if (!isAutoTagged(domain)) {
+      LOG.debug("Page link: [{}]//[{}][{}][{}] query: [{}] unchanged", scheme, domain, path, suffix, query);
+      return address;
+    }
+
+    query = amendQueryString(query);
+
+    StringBuilder url =
+        new StringBuilder(scheme)
+            .append("//")
+            .append(domain);
+    if (path != null)
+        url.append(path);
+    if (query != null)
+        url.append(query);
+    if (suffix != null)
+        url.append(suffix);
+
+    LOG.debug("### Tagged link: [{}]//[{}][{}][{}] query: [{}]", scheme, domain, path, suffix, query);
+    return url.toString();
   }
 }
