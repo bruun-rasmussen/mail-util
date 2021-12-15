@@ -3,13 +3,12 @@ package dk.br.mail;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
@@ -23,7 +22,7 @@ public class LinkTagger
 {
   private static final Logger LOG = LoggerFactory.getLogger(LinkTagger.class);
 
-  private final Stack<Map<String,String>> tags = new Stack();
+  private final LinkedList<Map<String,String>> tags = new LinkedList();
 
   public LinkTagger() {
     _init();
@@ -46,16 +45,27 @@ public class LinkTagger
   }
 
   public String amendQueryString(String qs) {
-    Set<String> names = new HashSet();
+    // 1) Keep values of parameters already in the query:
     List<QueryParam> parts = new LinkedList();
     splitQueryString(qs, parts);
-    for (QueryParam p : parts)
-      names.add(p.name);
 
-    for (Map<String, String> t : tags)
-      for (Map.Entry<String, String> e : t.entrySet())
-        if (names.add(e.getKey()))
-          parts.add(QueryParam.namedValue(e.getKey(), e.getValue()));
+    // 2) Collect tag names in first-to-last (insertion) order:
+    LinkedHashSet<String> tagNames = new LinkedHashSet();
+    Iterator<Map<String, String>> frames = tags.descendingIterator();
+    while (frames.hasNext())
+      tagNames.addAll(frames.next().keySet());
+
+    // 3) Disregard those present already:
+    for (QueryParam p : parts)
+      tagNames.remove(p.name);
+
+    // 4) Get values for each remaining tag in top-to-bottom (stacked) order:
+    for (String k : tagNames)
+      for (Map<String, String> frame : tags)
+        if (frame.containsKey(k)) {
+          parts.add(QueryParam.namedValue(k, frame.get(k)));
+          break;
+        }
 
     return joinQueryString(parts);
   }
@@ -87,6 +97,8 @@ public class LinkTagger
     private final String value;
 
     private QueryParam(String name, String sep, String value) {
+      if (name == null)
+        throw new IllegalArgumentException();
       this.name = name;
       this.sep = sep;
       this.value = value;
@@ -106,10 +118,10 @@ public class LinkTagger
       if (!m.matches())
         throw new IllegalArgumentException("'" + qsPart + "': unrecognized query string");
 
-      LOG.debug("'{}' : {}", qsPart, m.group());
       String name = urlDecode(m.group("name"));
       String sep = m.group("sep");
       String value = urlDecode(m.group("value"));
+      LOG.debug("'{}' : [{}, {}, {}]", qsPart, name, sep, value);
       return new QueryParam(name, sep, value);
     }
 
