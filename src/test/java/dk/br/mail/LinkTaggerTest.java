@@ -34,4 +34,15 @@ public class LinkTaggerTest
       Assert.assertEquals("?Jhsd6JH56JH&noget=mere&utm_medium=email&utm_source=Newsletter", q);
     }
 
+    @Test
+    public void testStack() throws Exception {
+      Assert.assertEquals("?utm_medium=email&utm_source=Newsletter", tagger.amendQueryString(""));
+      tagger.pushFrame();
+      tagger.put("x", "y");
+      tagger.put("utm_source", "Myletter");
+      Assert.assertEquals("?utm_medium=email&utm_source=Myletter&x=y", tagger.amendQueryString(""));
+      tagger.popFrame();
+      Assert.assertEquals("?utm_medium=email&utm_source=Newsletter", tagger.amendQueryString(""));
+    }
+
 }
