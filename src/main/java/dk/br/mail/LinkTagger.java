@@ -93,7 +93,12 @@ public class LinkTagger
     }
 
     private void appendTo(StringBuilder sb) {
-      sb.append(sb.length() == 0 ? "?" : "&").append(urlEncode(name)).append(sep).append(urlEncode(value));
+      sb.append(sb.length() == 0 ? "?" : "&").append(urlEncode(name));
+      if (sep != null) {
+        sb.append(sep);
+        if (value != null)
+          sb.append(urlEncode(value));
+      }
     }
 
     public static QueryParam ofPart(String qsPart) {
