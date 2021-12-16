@@ -6,7 +6,7 @@
 
   <groupId>dk.br.mail</groupId>
   <artifactId>mail-util</artifactId>
-  <version>0.21-SNAPSHOT</version>
+  <version>0.21</version>
 
   <name>E-Mail Helper Classes</name>
   <description>
@@ -18,7 +18,7 @@
     <developerConnection>
         scm:git:git@github.com:bruun-rasmussen/mail-util.git
     </developerConnection>
-    <tag>HEAD</tag>
+    <tag>mail-util-0.21</tag>
   </scm>
 
   <properties>
