@@ -547,7 +547,7 @@ public class MailMessageParser
       String sourceHref = attr.getValue();
       String taggedHref = tagger.amendHrefAddress(sourceHref);
       if (!StringUtils.equals(sourceHref, taggedHref)) {
-        attr.setValue(sourceHref);
+        attr.setValue(taggedHref);
         LOG.info("'{}' \u2192 '{}'", sourceHref, taggedHref);
       }
     }
