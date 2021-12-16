@@ -59,10 +59,10 @@ public class MailMessageParser
       throw new IllegalArgumentException(cfgSpec + " " + ex.getMessage());
     }
 
-    tagger.addTaggedDomains(config.getProperty("mail.tracking.domains", "localhost localhost:* *bruun-rasmussen.dk"));
+    tagger.addTaggedDomains(config.getProperty("mail.tracking.domains", "localhost localhost:*"));
     trackingHeaderName = config.getProperty("mail.tracking.header", "X-BR-Tracking-ID");
     trackingParameterName = config.getProperty("mail.tracking.parameter", "track-id");
-    trackingTokenAlphabet = config.getProperty("mail.tracking.token.alphabet", "BCDFGHJKLMNPQRSTVWXZbcdfghjkmnpqrstvwxz").toCharArray();
+    trackingTokenAlphabet = config.getProperty("mail.tracking.token.alphabet", "BCDFGHJKLMNPQRSTVWXZbcdfghjkmnpqrstvwxz0123456789_").toCharArray();
     trackingTokenLength = Integer.parseInt(config.getProperty("mail.tracking.token.length", "10"));
   }
 
