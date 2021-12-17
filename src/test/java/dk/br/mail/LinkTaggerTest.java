@@ -47,6 +47,16 @@ public class LinkTaggerTest
     }
 
     @Test
+    public void testHrefWithAnchorRef() throws Exception {
+      tagger.pushFrame();
+      tagger.put("utm_source", "Myletter");
+      tagger.addTaggedDomains("bruun-rasmussen.dk");
+
+      _amendedHref("https://bruun-rasmussen.dk/m/account/consignments/928146-1#messages-drawer",
+                   "https://bruun-rasmussen.dk/m/account/consignments/928146-1?utm_medium=email&utm_source=Myletter#messages-drawer");
+    }
+
+    @Test
     public void testHref() throws Exception {
       tagger.pushFrame();
       tagger.put("x", "y");
@@ -60,7 +70,6 @@ public class LinkTaggerTest
 
       tagger.popFrame();
     }
-
     private void _unchangedHref(String href) {
       Assert.assertEquals(href, tagger.amendHrefAddress(href));
     }
