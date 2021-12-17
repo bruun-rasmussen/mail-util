@@ -171,7 +171,7 @@ public class LinkTagger
   }
 
   private static final Pattern HTTP_URL =
-          Pattern.compile("(?<scheme>https?:)?//(?<domain>[^/]+)(?<path>/[^?&#;]*)?(?<query>\\?[^#;]*)?(?<suffix>;#.*)?");
+          Pattern.compile("(?<scheme>https?:)?//(?<domain>[^/]+)(?<path>/[^?&#;]*)?(?<query>\\?[^#;]*)?(?<suffix>[;#].*)?");
 
   public String amendHrefAddress(String address) {
     Matcher m = HTTP_URL.matcher(address);
