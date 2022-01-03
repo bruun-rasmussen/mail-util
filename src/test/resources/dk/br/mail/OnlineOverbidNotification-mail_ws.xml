@@ -29,6 +29,8 @@
 <header name="X-Auction-Number" value="11847"/>
 <header name="X-Language">da</header>
 <subject>Overbud på nr. 11847/2</subject>
+<tag name="utm_campaign">11847</tag>
+<tag name="utm_content">notifications</tag>
 <html-body>
 <html>
 <head>
@@ -67,14 +69,16 @@ img{-ms-interpolation-mode:bicubic;} /* Allow smoother rendering of resized imag
 <callout>
 <row>
 <columns large="3" small="4" style="padding-right: 10px !important;">
-<a href="http://localhost:8080/your-bids.do?mode=detail&amp;aid=100001075&amp;iid=301126557&amp;utm_medium=email&amp;utm_campaign=11847&amp;utm_source=overbid-notify&amp;utm_content=item-link">
+<tag name="utm_content">item-link</tag>
+<a href="http://localhost:8080/your-bids.do?mode=detail&amp;aid=100001075&amp;iid=301126557">
 <img class="center-img" src="http://img.bruun-rasmussen.dk/g/BRFull/Drafts/31/17/27/br_11223753_160x160.jpg?v=4"/>
 </a>
 </columns>
 <columns large="9" small="8">
 <h6 style="margin-top: 10px;">11847/2</h6>
 <p>
-<a href="http://localhost:8080/your-bids.do?mode=detail&amp;aid=100001075&amp;iid=301126557&amp;utm_medium=email&amp;utm_campaign=11847&amp;utm_source=overbid-notify&amp;utm_content=item-link">Kay Bojesen: Figur af delvist bemalet træ i form af hest. H. 14.</a>
+<tag name="utm_content">item-link</tag>
+<a href="http://localhost:8080/your-bids.do?mode=detail&amp;aid=100001075&amp;iid=301126557">Kay Bojesen: Figur af delvist bemalet træ i form af hest. H. 14.</a>
 </p>
 <p>Dit seneste bud: 
                   <strong>DKK 2.800</strong>
@@ -99,7 +103,7 @@ img{-ms-interpolation-mode:bicubic;} /* Allow smoother rendering of resized imag
 <row>
 <columns>
 <p>
-<small>Denne e-mail kan også modtages som SMS. Får du besked ved overbud? Tjek dine <a href="http://localhost:8080/ssl/edit-notifications.do?utm_medium=email&amp;utm_campaign=11847&amp;utm_source=overbid-notify&amp;utm_content=notifications">indstilinger</a>.</small>
+<small>Denne e-mail kan også modtages som SMS. Får du besked ved overbud? Tjek dine <a href="http://localhost:8080/ssl/edit-notifications.do">indstilinger</a>.</small>
 </p>
 <p>Med venlig hilsen<br/>
 <strong>Bruun Rasmussen Kunstauktioner</strong>

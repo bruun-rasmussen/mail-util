@@ -225,6 +225,10 @@ public class MailMessageParser
           String messageID = _text(propertyNode);
           msg.setMessageID(messageID);
         }
+        else if ("tag".equals(propertyName))
+        {
+          digestUrlTag(propertyNode);
+        }
         else
         {
           String value = _text(propertyNode);
