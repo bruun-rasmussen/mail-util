@@ -32,7 +32,14 @@ public class ParseTest
 
   @Test
   public void testGoodMail2() throws IOException {
-    testMailParser("OnlineOverbidNotification-mail_ws.xml");
+    MailMessageData mails[] = testMailParser("OnlineOverbidNotification-mail_ws.xml");
+
+    assertEquals(1, mails.length);
+
+    String subject = mails[0].getSubject();
+    assertEquals("Overbud på nr. 11847/2", subject);
+
+    System.out.println("HTML:" + mails[0].getHtmlBody());
   }
 
   @Test
@@ -40,7 +47,7 @@ public class ParseTest
     testMailParser("mail-merge-sample.xml");
   }
 
-  private void testMailParser(String resource) throws IOException {
+  private MailMessageData[] testMailParser(String resource) throws IOException {
     assertNotNull(resource);
 
     URL xmlSource = getClass().getResource(resource);
@@ -53,6 +60,8 @@ public class ParseTest
     MailMessageData[] mailData = MailMessageParser.parseMails(doc);
     assertNotNull(mailData);
     LOG.info("read {}", Arrays.asList(mailData));
+
+    return mailData;
   }
 
   private Document parse(URL src) throws IOException {

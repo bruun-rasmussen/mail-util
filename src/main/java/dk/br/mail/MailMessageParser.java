@@ -116,10 +116,15 @@ public class MailMessageParser
     }
   }
 
-  private void digestUrlTag(Element e) {
-    String name = e.getAttribute("name");
-    String value = _text(e);
+  private void digestUrlTag(Element tag) {
+    // Push name/value pair to stack:
+    String name = tag.getAttribute("name");
+    String value = _text(tag);
     tagger.put(name, value);
+
+    // Drop '<tag>' element from html output:
+    Comment comment = tag.getOwnerDocument().createComment(" URL-tag " + name + ":" + value + " ");
+    tag.getParentNode().replaceChild(comment, tag);
   }
 
   /**
