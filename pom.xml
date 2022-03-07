@@ -119,7 +119,7 @@
   <repositories>
     <repository>
       <id>Smartifact-releases</id>
-      <url>http://artifactory.bruun-rasmussen.dk/artifactory/libs-release-local</url>
+      <url>https://artifactory.bruun-rasmussen.dk/artifactory/libs-release-local</url>
       <releases>
         <enabled>true</enabled>
       </releases>
