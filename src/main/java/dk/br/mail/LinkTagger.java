@@ -47,10 +47,10 @@ public class LinkTagger
     String was = tags.peek().put(name, value);
   }
 
-  public String amendQueryString(String qs) {
+  public String amendQueryString(String qs, String enc) {
     // 1) Keep values of parameters already in the query:
     List<QueryParam> parts = new LinkedList();
-    splitQueryString(qs, parts);
+    splitQueryString(qs, parts, enc);
 
     // 2) Collect tag names in first-to-last (insertion) order:
     LinkedHashSet<String> tagNames = new LinkedHashSet();
@@ -70,25 +70,25 @@ public class LinkTagger
           break;
         }
 
-    return joinQueryString(parts);
+    return joinQueryString(parts, enc);
   }
 
   private static final Pattern QUERY_LIST = Pattern.compile("[&?]+");
 
-  private static void splitQueryString(String qs, List<QueryParam> res) {
+  private static void splitQueryString(String qs, List<QueryParam> res, String enc) {
     if (!StringUtils.isEmpty(qs))
       for (String part : QUERY_LIST.split(qs))
         if (!StringUtils.isBlank(part))
-          res.add(QueryParam.ofPart(part));
+          res.add(QueryParam.ofPart(part, enc));
   }
 
-  private static String joinQueryString(List<QueryParam> parts) {
+  private static String joinQueryString(List<QueryParam> parts, String enc) {
     if (parts.isEmpty())
       return "";
 
     StringBuilder sb = new StringBuilder();
     for (QueryParam p : parts)
-      p.appendTo(sb);
+      p.appendTo(sb, enc);
     return sb.toString();
   }
 
@@ -107,23 +107,23 @@ public class LinkTagger
       this.value = value;
     }
 
-    private void appendTo(StringBuilder sb) {
-      sb.append(sb.length() == 0 ? "?" : "&").append(urlEncode(name));
+    private void appendTo(StringBuilder sb, String enc) {
+      sb.append(sb.length() == 0 ? "?" : "&").append(urlEncode(name, enc));
       if (sep != null) {
         sb.append(sep);
         if (value != null)
-          sb.append(urlEncode(value));
+          sb.append(urlEncode(value, enc));
       }
     }
 
-    public static QueryParam ofPart(String qsPart) {
+    public static QueryParam ofPart(String qsPart, String enc) {
       Matcher m = QUERY_PAIR.matcher(qsPart);
       if (!m.matches())
         throw new IllegalArgumentException("'" + qsPart + "': unrecognized query string");
 
-      String name = urlDecode(m.group("name"));
+      String name = urlDecode(m.group("name"), enc);
       String sep = m.group("sep");
-      String value = urlDecode(m.group("value"));
+      String value = urlDecode(m.group("value"), enc);
       LOG.debug("'{}' : [{}, {}, {}]", qsPart, name, sep, value);
       return new QueryParam(name, sep, value);
     }
@@ -133,22 +133,22 @@ public class LinkTagger
     }
   }
 
-  private static String urlDecode(String s) {
+  private static String urlDecode(String s, String enc) {
     if (StringUtils.isEmpty(s))
       return "";
     try {
-      return URLDecoder.decode(s, "UTF-8");
+      return URLDecoder.decode(s, enc);
     }
     catch (UnsupportedEncodingException ex) {
       throw new RuntimeException(ex);
     }
   }
 
-  private static String urlEncode(String s) {
+  private static String urlEncode(String s, String enc) {
     if (StringUtils.isEmpty(s))
       return "";
     try {
-      return URLEncoder.encode(s, "UTF-8");
+      return URLEncoder.encode(s, enc);
     }
     catch (UnsupportedEncodingException ex) {
       throw new RuntimeException(ex);
@@ -173,7 +173,7 @@ public class LinkTagger
   private static final Pattern HTTP_URL =
           Pattern.compile("(?<scheme>https?:)?//(?<domain>[^/]+)(?<path>/[^?&#;]*)?(?<query>\\?[^#;]*)?(?<suffix>[;#].*)?");
 
-  public String amendHrefAddress(String address) {
+  public String amendHrefAddress(String address, String enc) {
     Matcher m = HTTP_URL.matcher(address);
     if (!m.matches()) {
       LOG.debug("### href=\"{}\" not a web URL", address);
@@ -191,7 +191,7 @@ public class LinkTagger
       return address;
     }
 
-    query = amendQueryString(query);
+    query = amendQueryString(query, enc);
 
     StringBuilder url =
         new StringBuilder(scheme)

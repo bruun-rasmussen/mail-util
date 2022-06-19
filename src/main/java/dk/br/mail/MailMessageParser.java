@@ -553,8 +553,11 @@ public class MailMessageParser
 
     private void digestHrefAttribute(Attr attr)
     {
+      // scan for sibling 'uri-encoding' attribute, if present:
+      Attr encAttr = siblingAttr(attr, "uri-encoding");
+
       String sourceHref = attr.getValue();
-      String taggedHref = tagger.amendHrefAddress(sourceHref);
+      String taggedHref = tagger.amendHrefAddress(sourceHref, encAttr == null ? "UTF-8" : encAttr.getValue());
       if (!StringUtils.equals(sourceHref, taggedHref)) {
         attr.setValue(taggedHref);
         LOG.info("'{}' \u2192 '{}'", sourceHref, taggedHref);
@@ -715,6 +718,19 @@ public class MailMessageParser
       }
       return part;
     }
+  }
+
+  private static Attr siblingAttr(Attr here, String name) {
+    Node parent = here.getParentNode();
+    if (parent == null)
+      return null;
+    NodeList siblings = parent.getChildNodes();
+    for (int i = 0; i < siblings.getLength(); i++) {
+      Node n = siblings.item(i);
+      if (n.getNodeType() == Node.ATTRIBUTE_NODE && n.getNodeName().equals(name))
+        return ((Attr)n);
+    }
+    return null;
   }
 
   private static Attr attrIgnoreCase(Element elem, String attr) {
