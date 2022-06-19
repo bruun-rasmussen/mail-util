@@ -111,7 +111,8 @@
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
-      <version>1.14.2</version>
+      <!-- 1.14+ need Java 8+ -->
+      <version>1.13.1</version>
     </dependency>
 
   </dependencies>
