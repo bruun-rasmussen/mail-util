@@ -61,7 +61,7 @@
     <dependency>
       <groupId>dk.br.mail</groupId>
       <artifactId>zurb-email</artifactId>
-      <version>0.1.23-SNAPSHOT</version>
+      <version>0.1.23</version>
       <scope>test</scope>
     </dependency>
     <dependency>
