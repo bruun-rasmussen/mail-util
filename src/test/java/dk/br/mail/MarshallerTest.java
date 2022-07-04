@@ -57,6 +57,11 @@ public class MarshallerTest
         testSample(_sample("dk/br/mail/html-and-image.eml"));
     }
 
+    @Test
+    public void testWithAttachment() throws Exception {
+        testSample(_sample("dk/br/mail/html-with-attachment.eml"));
+    }
+
 /*  @Test
     public void testComplex() throws Exception {
         testSample(_sample("dk/br/mail/complex.eml"));
@@ -66,7 +71,7 @@ public class MarshallerTest
       return Thread.currentThread().getContextClassLoader().getResource(name);
     }
 
-    private void testSample(URL eml) throws Exception {
+    private MailMessageData testSample(URL eml) throws Exception {
         MimeMessage msg = loadMessage(eml);
         Document doc = MailMessageMarshaller.marshal(msg);
         assertNotNull(doc);
@@ -88,6 +93,7 @@ public class MarshallerTest
         finally {
           emlFile.close();
         }
+        return mail;
     }
 
 

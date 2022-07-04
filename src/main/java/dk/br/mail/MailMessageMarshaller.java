@@ -14,6 +14,7 @@ import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Part;
+import javax.mail.internet.ContentType;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
@@ -120,28 +121,38 @@ public class MailMessageMarshaller
     else if (p instanceof MimeBodyPart)
     {
       MimeBodyPart mbp = (MimeBodyPart)p;
-      String contentID = mbp.getContentID();
-      if (contentID == null) {
-        LOG.info("'{}' {} with null Content-ID - ignored", p.getContentType(), p.getClass().getName());
-      }
-      else {
-        String base64cdata;
-        InputStream is = mbp.getInputStream();
-        try {
-          byte content[] = IOUtils.toByteArray(is);
-          base64cdata = new String(Base64.encodeBase64(content, true), "iso-8859-1");
-        }
-        finally {
-          is.close();
-        }
 
+      String base64cdata;
+      InputStream is = mbp.getInputStream();
+      try {
+        byte content[] = IOUtils.toByteArray(is);
+        base64cdata = new String(Base64.encodeBase64(content, true), "UTF-8");
+      }
+      finally {
+        is.close();
+      }
+
+      ContentType type = new ContentType(mbp.getContentType());
+      String disposition = mbp.getDisposition();
+      String contentID = mbp.getContentID();
+      if (contentID != null) {
         Element rel = _addElement(m, "related");
         Matcher cid = CID_PATTERN.matcher(contentID);
         if (cid.matches())
           rel.setAttribute("id", cid.group("cid"));
-        _addText(rel, "type", mbp.getContentType());
-        _addText(rel, "disposition", mbp.getDisposition());
+        _addText(rel, "type", type.getBaseType());
+        _addText(rel, "disposition", disposition);
         _addCData(rel, "content", base64cdata);
+      }
+      else if (disposition != null && disposition.startsWith("attachment")) {
+        LOG.info("attaching {} {}", type, disposition);
+        Element rel = _addElement(m, "attachment");
+        rel.setAttribute("type", type.getBaseType());
+        rel.setAttribute("name", type.getParameter("name"));
+        rel.appendChild(rel.getOwnerDocument().createCDATASection(base64cdata));
+      }
+      else {
+        LOG.info("'{}' (Content-Disposition: {}) {} with null Content-ID - ignored", type, disposition, p.getClass().getName());
       }
     }
     else
@@ -263,8 +274,7 @@ public class MailMessageMarshaller
     _addText(parentNode, elementName, ISO8601_TS.format(d));
   }
 
-  private static void _addAddress(Node parentNode, String type,
-          InternetAddress a)
+  private static void _addAddress(Node parentNode, String type, InternetAddress a)
   {
     Element n = _addElement(parentNode, type);
 

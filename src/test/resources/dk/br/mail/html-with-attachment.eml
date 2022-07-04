@@ -1,0 +1,415 @@
+Received: from AM0PR01MB5731.eurprd01.prod.exchangelabs.com
+ (2603:10a6:800:60::11) by VI1PR0102MB3407.eurprd01.prod.exchangelabs.com with
+ HTTPS via VI1PR0501CA0025.EURPRD05.PROD.OUTLOOK.COM; Sun, 24 Nov 2019
+ 09:35:32 +0000
+Received: from VI1PR0102CA0026.eurprd01.prod.exchangelabs.com
+ (2603:10a6:802::39) by AM0PR01MB5731.eurprd01.prod.exchangelabs.com
+ (2603:10a6:208:174::30) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.2474.16; Sun, 24 Nov
+ 2019 09:35:30 +0000
+Received: from VE1EUR02FT056.eop-EUR02.prod.protection.outlook.com
+ (2a01:111:f400:7e06::209) by VI1PR0102CA0026.outlook.office365.com
+ (2603:10a6:802::39) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.2474.16 via Frontend
+ Transport; Sun, 24 Nov 2019 09:35:30 +0000
+Authentication-Results: spf=neutral (sender IP is 89.104.206.16)
+ smtp.mailfrom=dpd.co.uk; BRUUN-RASMUSSEN.DK; dkim=test (signature was
+ verified) header.d=dpd.co.uk;BRUUN-RASMUSSEN.DK; dmarc=pass action=none
+ header.from=dpd.co.uk;compauth=pass reason=100
+Received-SPF: Neutral (protection.outlook.com: 89.104.206.16 is neither
+ permitted nor denied by domain of dpd.co.uk)
+Received: from in12g.electric.net (89.104.206.16) by
+ VE1EUR02FT056.mail.protection.outlook.com (10.152.13.71) with Microsoft SMTP
+ Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.2474.17 via Frontend Transport; Sun, 24 Nov 2019 09:35:30 +0000
+Received: from 1iYoIi-0008Ii-5h by in12g.electric.net with hostsite:2153977 (Exim 4.92.3)
+	(envelope-from <yourdelivery@dpd.co.uk>)
+	id 1iYoIj-0008Qi-5n
+	for POSTNORD@BRUUN-RASMUSSEN.DK; Sun, 24 Nov 2019 01:35:29 -0800
+Received: by emcmailer; Sun, 24 Nov 2019 01:35:29 -0800
+Received-SPF: pass (in12g.electric.net: domain of dpd.co.uk designates 89.207.48.184 as permitted sender) client-ip=89.207.48.184; envelope-from=yourdelivery@dpd.co.uk; helo=smtp-out-set3-2.geopostuk.com;
+Received: from smtp-out-set3-2.geopostuk.com ([89.207.48.184])
+	by in12g.electric.net with esmtps (TLSv1.2:ECDHE-RSA-AES256-GCM-SHA384:256)
+	(Exim 4.92.3)
+	(envelope-from <yourdelivery@dpd.co.uk>)
+	id 1iYoIi-0008Ii-5h
+	for POSTNORD@BRUUN-RASMUSSEN.DK; Sun, 24 Nov 2019 01:35:28 -0800
+Date: Sun, 24 Nov 2019 09:35:22 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=dpd.co.uk;
+	s=relay2013a; t=1574588122;
+	bh=G78wPKS7hcnklJ2mRqAAUnGeIA6iekviOqbcFHUDl0k=;
+	h=Date:To:Subject:From:From;
+	b=kbgCk/zU9b+J3VDJFJx+1JTI9tC7WgsxOeDq0jmK1I9IEFDwYlPwMxO6iFNje5HMh
+	 CDNHh2P74q9ivoNwVYbGv14w2o3fdT8wSsfkPxUdDa4Xfn5J59iY1D3970A7CIbzl/
+	 /kgyA4bV6d1tG1UYPehx6vx+LfVOrapazhpmKIOA=
+To: BR-249215<POSTNORD@BRUUN-RASMUSSEN.DK>
+Subject: Your BRU order will be delivered today between 10:28-11:28
+From: BRU  <yourdelivery@dpd.co.uk>
+Content-Type: multipart/related; boundary="--==_mimepart_58d15b77e8fdd_43fc8121b89f07094cf"; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Message-Id: <20191124093522.1EE6541290@smtp-out-set3-2.geopostuk.com>
+X-FM-White: dnswl - smtp-out-set3-2.geopostuk.com [89.207.48.184]
+X-FM-OS: Linux 2.2.x-3.x
+X-FM-GeoIP: GB
+X-Proto: esmtps
+X-Revdns: smtp-out-set3-2.geopostuk.com
+X-HELO: smtp-out-set3-2.geopostuk.com
+X-TLS: TLSv1.2:ECDHE-RSA-AES256-GCM-SHA384:256
+X-Authenticated_ID:
+X-Origin-IP: 89.207.48.184
+X-Env-From: yourdelivery@dpd.co.uk
+X-DKIM: pass
+X-PolicySMART: 6888962
+X-SPAM-Status: NO, 0.0 / 4.0
+X-SPAM-Summary: CL_DHD_BULK=0.0
+X-Virus-Status: Scanned by VirusSMART (b)
+X-Virus-Status: Scanned by VirusSMART (c)
+Return-Path: yourdelivery@dpd.co.uk
+X-MS-Exchange-Organization-ExpirationStartTime: 24 Nov 2019 09:35:30.0678
+ (UTC)
+X-MS-Exchange-Organization-ExpirationStartTimeReason: OriginalSubmit
+X-MS-Exchange-Organization-ExpirationInterval: 1:00:00:00.0000000
+X-MS-Exchange-Organization-ExpirationIntervalReason: OriginalSubmit
+X-MS-Exchange-Organization-Network-Message-Id:
+ 6615a0b4-3f46-4416-b586-08d770c1a54f
+X-EOPAttributedMessage: 0
+X-EOPTenantAttributedMessage: 18581e6b-2327-4856-bb5a-d9d366690de0:0
+X-MS-Exchange-Organization-MessageDirectionality: Incoming
+X-Forefront-Antispam-Report:
+ CIP:89.104.206.16;IPV:NLI;CTRY:DK;EFV:NLI;SFV:NSPM;SFS:(286005)(199004)(189003)(30844003)(298455003)(54896002)(71190400001)(19627405001)(956004)(336012)(3556765003)(1096003)(6306002)(236005)(5024004)(9686003)(53416004)(16003)(7636002)(568964002)(347745004)(8266002)(21615005)(1076003)(9786002)(8676002)(5000100001)(86362001)(356004)(105004)(230700001)(7596002)(26005)(7576002)(6916009)(18064005)(7696005)(33964004)(246002)(33656002)(23676004)(97876018)(55016002)(606006)(733005)(6666004)(39210200001)(563144003);DIR:INB;SFP:;SCL:1;SRVR:AM0PR01MB5731;H:in12g.electric.net;FPR:;SPF:Neutral;LANG:en;PTR:in12g.electric.net;A:1;MX:1;
+X-MS-Exchange-Organization-AuthSource:
+ VE1EUR02FT056.eop-EUR02.prod.protection.outlook.com
+X-MS-Exchange-Organization-AuthAs: Anonymous
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: 6615a0b4-3f46-4416-b586-08d770c1a54f
+X-MS-TrafficTypeDiagnostic: AM0PR01MB5731:
+X-MS-Exchange-PUrlCount: 6
+X-MS-Exchange-Transport-Forked: True
+X-MS-Oob-TLC-OOBClassifiers: OLM:785;
+X-MS-Exchange-Organization-SCL: 1
+X-Microsoft-Antispam: BCL:1;
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 24 Nov 2019 09:35:30.0637
+ (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 6615a0b4-3f46-4416-b586-08d770c1a54f
+X-MS-Exchange-CrossTenant-Id: 18581e6b-2327-4856-bb5a-d9d366690de0
+X-MS-Exchange-CrossTenant-FromEntityHeader: Internet
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR01MB5731
+X-MS-Exchange-Transport-EndToEndLatency: 00:00:02.3183183
+X-MS-Exchange-Processed-By-BccFoldering: 15.20.2474.022
+X-Microsoft-Antispam-Mailbox-Delivery:
+	ucf:0;jmr:0;ex:0;auth:0;dest:I;ENG:(20160514016)(750127)(520011016)(944504077)(944701077)(944506383)(944626516);
+X-Microsoft-Antispam-Message-Info:
+	=?utf-8?B?NHdzWG50N3RWeXh0VWhuUnlJRGUxYmpmRHcxSlJPdmFYN2xjT3VOa21IS2pr?=
+ =?utf-8?B?bTg0NUo0a0x0L3NUODgrNU9CYkZEUnhIaDQySmtPWW5vUTA3aDZ1WDBadHBs?=
+ =?utf-8?B?OWhhQmRhNkdrTnIzbTc2RG51OE4wZlZNWlVZRkxKRHBTNDYzMEhWRXZKa3dk?=
+ =?utf-8?B?UTVlbFBJd2d4QnE2QmxvZEZ5NU5jcGNYYnNlQ2lGdG9TejU1U0YwNXpLODZJ?=
+ =?utf-8?B?NEFacGp2U1lzZUxYMHpkeTNJcTBPR29lYzl0alZDM2RTd1JCUFdSNWZZT0tP?=
+ =?utf-8?B?S1NSenplZElaaG55UGVxQlhQMGVMZzVYb1U0SWNGTDFTSk1RL0N5a1g0UTZQ?=
+ =?utf-8?B?akVqTldYbm1LdTNxRVMrTTFRTUMveU1JeEpDNW9jQlkwdEg4RE9vdVJzeUgv?=
+ =?utf-8?B?ZWVKWE0rMFFUZmh4bGZJajcxZ1ZOeGlkcnllOTN4dE9IdDJlWEJBSWordXQv?=
+ =?utf-8?B?UTFZVGlZanpjdmRnVDhWRWxzWk9OU3k3MWZTZnFrK2tuV3VzYURueWhpVW5Q?=
+ =?utf-8?B?Y2k2WDExUVVEYTNPWG5jcU45R2hSOVJNa1RKVlYyWW53blQ4MXNvL2duTzZG?=
+ =?utf-8?B?RkV4eS9VcTJWSTBUeXBFVWQvTUd0Mk02a3V4V2M4Q3hWOXFKeG04dS8zNWZJ?=
+ =?utf-8?B?dnNHWUloN2xPQ3BBVzJGa2VTRm12YU4vQTJoLzlXaGJlMzFDaUUrSFlIcDVp?=
+ =?utf-8?B?UGZhZW9IYklsMndTMnl4VWFRaDVmaU5tQm9JMC8zTnVXYU1BRWJsMG1WZTMy?=
+ =?utf-8?B?ZmkxZ04xRUUwUGlXWGZiUE1qMGpWeUM0cVZPanB1SkwveHN0T3M5YUV2L1gw?=
+ =?utf-8?B?dWFUbXpuWWNKU0N0U0EwcGhnS1JRdnBmbllkR2pSWVlxeVNRcm5SajdkNHRn?=
+ =?utf-8?B?MTZwOEtBM0praGw3bHdlV2I1VENaWkt5N1FjUnBHRnpwaS9wZzQwV2MxNTFC?=
+ =?utf-8?B?WGgxeFR1VmVPNGxjWnU5SjN3b25veUFtc0hUN0ZJZThMaEgvdjNKYlA2THhI?=
+ =?utf-8?B?SzdJSnJDVnN6RWtQbzUwS0U5cHlIZkxkSHp4TVlzcWFOQmVCbzBxaEFpRU9y?=
+ =?utf-8?B?cXFBRldxQllnVTNMSjF0aU82VnFXdUo0V0ZNYk5sekdaN3VHem1CYnFFY0ZZ?=
+ =?utf-8?B?VHR1bnR3eFZxcnRxKzBrVEhPcEVtMEJhOGcyeGtiZnEra2RDSWtwbFVsQWhy?=
+ =?utf-8?B?ZTRvT0pFTjBVUVBlYlVFcC9ZVm8xOGd5WFFZZXBHMmhvYUNKYnZVV1RERlB6?=
+ =?utf-8?B?djhzd25GeklJMStsZEc3WXJlWGxyVXVYNFd5WFJDSkh2TTF5Sm9PM0cwRkxY?=
+ =?utf-8?B?VXFYRGtuQnRDSS80UTlxdzZ6UG1adkZqQWNZcXlWUzNHaDJEVGNSeGdwVG9n?=
+ =?utf-8?B?bUw5M0E0S3d2OU1ZRU9IZGY2S0RDckpGUCszcXBXTktuK0srNVhtV3lUWE5k?=
+ =?utf-8?B?NFBpenhSSzUwbXlvVzM4akFYd1puanhCVE8yczlHR1lEekwvYTBMN1FTd0Iy?=
+ =?utf-8?Q?ZBOp8M=3D?=
+MIME-Version: 1.0
+
+----==_mimepart_58d15b77e8fdd_43fc8121b89f07094cf
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+<!--[if gte mso 9]><xml>
+    <o:OfficeDocumentSettings>
+        <o:AllowPNG/>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+</xml><![endif]--><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width">
+
+    <meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="date=no">
+    <meta name="format-detection" content="address=no">
+    <meta name="format-detection" content="email=no">
+    <meta name="format-detection" content="all=no">
+
+    <!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]-->
+    <title>Template Base</title>
+
+
+    <style type="text/css" id="media-query">
+        body {
+            margin: 0;
+            padding: 0; }
+
+        @media screen yahoo{
+            div {
+                overflow: hidden;
+            }
+
+            .linkHide {
+                display:none;
+            }
+        }
+
+        .linkHide {
+                display:none;
+         }
+
+        table {
+            border-collapse: collapse;
+            table-layout: fixed; }
+
+        * {
+            line-height: inherit; }
+
+        a[x-apple-data-detectors=true] {
+            color: inherit !important;
+            text-decoration: none !important; }
+
+        a[x-apple-data-detectors] {
+            color: inherit !important;
+            text-decoration: none !important;
+            font-size: inherit !important;
+            font-family: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
+        }
+
+        .ie-browser .col, [owa] .block-grid .col {
+            display: table-cell;
+            float: none !important;
+            vertical-align: top; }
+
+        .ie-browser .corner__x {
+            display: none; }
+
+        .mso-container .corner__x {
+            font-size: 0; }
+
+        .ie-browser .col.num12, .ie-browser .block-grid, [owa] .col.num12, [owa] .block-grid {
+            width: 500px !important; }
+
+        .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
+            line-height: 100%; }
+
+        .ie-browser .block-grid.mixed-two-up .col.num4, [owa] .block-grid.mixed-two-up .col.num4 {
+            width: 164px !important; }
+
+        .ie-browser .block-grid.mixed-two-up .col.num8, [owa] .block-grid.mixed-two-up .col.num8 {
+            width: 328px !important; }
+
+        .ie-browser .block-grid.two-up .col, [owa] .block-grid.two-up .col {
+            width: 250px !important; }
+
+        .ie-browser .block-grid.three-up .col, [owa] .block-grid.three-up .col {
+            width: 166px !important; }
+
+        .ie-browser .block-grid.four-up .col, [owa] .block-grid.four-up .col {
+            width: 125px !important; }
+
+        .ie-browser .block-grid.five-up .col, [owa] .block-grid.five-up .col {
+            width: 100px !important; }
+
+        .ie-browser .block-grid.six-up .col, [owa] .block-grid.six-up .col {
+            width: 83px !important; }
+
+        .ie-browser .block-grid.seven-up .col, [owa] .block-grid.seven-up .col {
+            width: 71px !important; }
+
+        .ie-browser .block-grid.eight-up .col, [owa] .block-grid.eight-up .col {
+            width: 62px !important; }
+
+        .ie-browser .block-grid.nine-up .col, [owa] .block-grid.nine-up .col {
+            width: 55px !important; }
+
+        .ie-browser .block-grid.ten-up .col, [owa] .block-grid.ten-up .col {
+            width: 50px !important; }
+
+        .ie-browser .block-grid.eleven-up .col, [owa] .block-grid.eleven-up .col {
+            width: 45px !important; }
+
+        .ie-browser .block-grid.twelve-up .col, [owa] .block-grid.twelve-up .col {
+            width: 41px !important; }
+
+        @media only screen and (min-width: 520px) {
+            .block-grid {
+                width: 500px !important; }
+            .block-grid .col {
+                display: table-cell;
+                Float: none !important;
+                vertical-align: top; }
+            .block-grid .col.num12 {
+                width: 497px !important; }
+            .block-grid.mixed-two-up .col.num4 {
+                width: 164px !important; }
+            .block-grid.mixed-two-up .col.num8 {
+                width: 328px !important; }
+            .block-grid.two-up .col {
+                width: 250px !important; }
+            .block-grid.three-up .col {
+                width: 166px !important; }
+            .block-grid.four-up .col {
+                width: 125px !important; }
+            .block-grid.five-up .col {
+                width: 100px !important; }
+            .block-grid.six-up .col {
+                width: 83px !important; }
+            .block-grid.seven-up .col {
+                width: 71px !important; }
+            .block-grid.eight-up .col {
+                width: 62px !important; }
+            .block-grid.nine-up .col {
+                width: 55px !important; }
+            .block-grid.ten-up .col {
+                width: 50px !important; }
+            .block-grid.eleven-up .col {
+                width: 45px !important; }
+            .block-grid.twelve-up .col {
+                width: 41px !important; } }
+
+        @media (max-width: 520px) {
+            .block-grid, .col {
+                min-width: 320px !important;
+                max-width: 100% !important; }
+            .block-grid {
+                width: calc(100% - 40px) !important; }
+            .col {
+                width: 100% !important; }
+            .col > div {
+                margin: 0 auto; }
+            img.fullwidth {
+                max-width: 100% !important; } }
+    </style>
+</head>
+<!--[if mso]>
+<body class="mso-container" style="background-color:#FFFFFF;">
+<![endif]-->
+<!--[if !mso]><!-->
+<body class="clean-body" style="margin: 0;padding: 0;-webkit-text-size-adjust: 100%;background-color: #FFFFFF;">
+<!--<![endif]-->
+<div class="nl-container" style="min-width: 320px;Margin: 0 auto;background-color: #FFFFFF;">
+
+    <div style="background-color:transparent; margin-top: 10px;"><!-- TopMarginHere -->
+        <div rel="col-num-container-box" style="Margin: 0 auto;min-width: 320px;max-width: 500px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;" class="block-grid two-up">
+            <!--[if !mso|(IE)]><!--><div style="background-color: #FFFFFF;height: 65px; border: 1px solid #414342;line-height: 65px;max-width: 500px;"><!--<![endif]--><!-- BorderStyleHere -->
+            <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td  style="background-color:transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width: 500px;"><tr class="layout-full-width" style="background-color:transparent;"><td class="corner__x">&nbsp;</td><![endif]-->
+
+            <!--[if (mso)|(IE)]><td align="center"  width="250" style=" width:250px; border-top: 0px solid transparent; border-left: 0px solid transparent;  border-bottom: 0px solid transparent; border-right: 0px solid transparent; padding-right: 0px; padding-left: 0px;" valign="top"><![endif]-->
+            <!--[if !mso]><!--><div rel="col-num-container-box" class="" style="width: 34%;display: inline-block;float: left;">
+                <div style="background-color: transparent; border:none;padding:none;margin:none;"><!--<![endif]-->
+
+                    <!-- *** DPD Brand Logo *** - START -->
+                    <div style="height: 65px; line-height: 65px;">
+                        <img class="" align="left" border="0" src="https://www.dpd.co.uk/asset_files/logo/dpd.png" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block;border: 0;width: auto; max-height: 45px; padding-left: 10px;padding-top: 10px;">
+                    </div>
+                    <!-- *** DPD Brand Logo *** - END -->
+
+                    <!--[if !mso]><!--></div>
+            </div><!--<![endif]-->
+            <!--[if (mso)|(IE)]></td><td align="center"  width="250" style="; width:250px; border-top: 0px solid transparent; border-left: 0px solid transparent;  border-bottom: 0px solid transparent; border-right: 0px solid transparent; padding-right: 0px; padding-left: 0px;" valign="top"><![endif]-->
+            <!--[if !mso]><!--><div rel="col-num-container-box" class="" style="width: 65%;display: inline-block;float: right;">
+                <div style="background-color: transparent; border:none;padding:none;margin:none;"><!--<![endif]-->
+
+                    <!-- *** Customer Logo *** - START -->
+                    <div id="logo-container" style="height: 65px;line-height: 65px;">
+                        <img class="" align="right" height="40" border="0" src="http://31cd35098195e2510dc4-37bc6a2097e4b87eca67bfae231c19f8.r16.cf3.rackcdn.com/customer-maint-notification-303941-16.png" style="vertical-align: middle !important;max-width: 96%;width: auto;margin-top:12.5px;margin-right:2%;margin-left:2%;height:40px;">
+                    </div>
+                    <!-- *** Customer Logo *** - END -->
+
+                    <!--[if !mso]><!--></div>
+            </div><!--<![endif]-->
+            <!--[if (mso)|(IE)]></td><td class="corner__x">&nbsp;</td></tr></table></td></tr></table><![endif]-->
+            <!--[if !mso]><!--></div><!--<![endif]-->
+        </div>
+    </div>
+
+    <div style="background-color:transparent;">
+        <div rel="col-num-container-box" style="Margin: 0 auto;min-width: 320px;max-width: 500px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #54B947;" class="block-grid ">
+            <!--[if !mso|(IE)]><!--><div style="border-collapse: collapse; border: 1px solid #414342;"><!--<![endif]--><!-- BorderStyleHere -->
+            <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td  style="background-color:transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width: 500px;"><tr class="layout-full-width" style="background-color:#54B947;"><td class="corner__x">&nbsp;</td><![endif]-->
+
+            <!--[if (mso)|(IE)]><td align="center"  width="500" style=" width:500px; border-top: 0px solid transparent; border-left: 0px solid transparent;  border-bottom: 0px solid transparent; border-right: 0px solid transparent;" valign="top"><![endif]-->
+            <!--[if !mso]><!--><div rel="col-num-container-box" style="min-width: 320px;max-width: 500px;background-color: #54B947;">
+                <div style="background-color: #54B947; border-top: 0px solid transparent; border-left: 0px solid transparent; border-bottom: 0px solid transparent; border-right: 0px solid transparent;"><!--<![endif]-->
+
+
+
+                    <!-- HEADING Start -->
+                    <div style="Margin-right: 10px; Margin-left: 10px;">
+                        <div style="line-height: 10px; font-size: 1px">&nbsp;</div>
+                        <div style="font-family:Arial,Helvetica;color:#FFFFFF;text-align: left;">
+                            <p style="font-family:Arial,Helvetica;margin: 0;font-size: 20px;text-align: left; font-weight: bold; "><!--1*OFG*E*D 05025037546580*18947--><div style="background-image: url(https://www.dpd.co.uk/asset_files/email/dpdgreen_email_white_plug.png);background-size: 100% 100px;background-position: bottom;background-repeat: no-repeat;" background-image="">
+<!--NOTIFY.HTML.STYLE LEAD.TEXT Start--><div style="Margin-right: 10px; Margin-left: 10px;padding-bottom: 10px;">  <div style="font-family:Arial,Helvetica;color:#FFFFFF;text-align:center;">    <p style="font-family:Arial,Helvetica;margin:0;font-size:20px;line-height:30px;text-align:center;">Joshua will deliver your BRU  parcel on an <b>all-electric vehicle</b></p>  </div></div><!-- NOTIFY.HTML.STYLE LEAD.TEXT End-->
+<!-- NOTIFY.HTML.STYLE FEATURE.TEXT.NO.PADDING Start--><div style="Margin-right: 10px; Margin-left: 10px;">  <div style="font-family:Arial,Helvetica;color:#FFFFFF;text-align:center;">    <p style="font-family:Impact,Arial,Helvetica;margin:0;font-size:36px;line-height:43px;text-align:center;font-weight:bold;">TODAY</p>  </div></div><!-- NOTIFY.HTML.STYLE FEATURE.TEXT.NO.PADDING End-->
+<!-- NOTIFY.HTML.STYLE SMALL.TEXT Start--><div style="Margin-right: 10px; Margin-left: 10px;padding-bottom: 10px;">  <div style="font-family:Arial,Helvetica;color:#FFFFFF;text-align:center;">   <p style="font-family:Arial,Helvetica;margin:0;font-weight:200;font-size:14px;line-height:16px;text-align:center;">24th November ‍2019</p>  </div></div><!-- NOTIFY.HTML.STYLE SMALL.TEXT End-->
+<!-- NOTIFY.HTML.STYLE DEFAULT.TEXT Start--><div style="Margin-right: 10px; Margin-left: 10px;padding-bottom: 10px;">  <div style="font-family:Arial,Helvetica;color:#FFFFFF;text-align:center;">   <p style="font-family: Arial,Helvetica;margin:0;font-weight:200;font-size:16px;line-height:19px;text-align:center;">between</p>  </div></div><!-- NOTIFY.HTML.STYLE DEFAULT.TEXT End-->
+<!-- NOTIFY.HTML.STYLE FEATURE.TEXT Start--><div style="Margin-right: 10px; Margin-left: 10px;padding-bottom: 10px;">  <div style="font-family:Arial,Helvetica;color:#FFFFFF;text-align:center;">    <p style="font-family:Impact,Arial,Helvetica;margin:0;font-size:36px;line-height:43px;text-align:center;font-weight:bold;">‍10:28-‍11:28</p>  </div></div><!-- NOTIFY.HTML.STYLE FEATURE.TEXT End-->
+<!-- NOTIFY.HTML.STYLE DEFAULT.TEXT Start--><div style="Margin-right: 10px; Margin-left: 10px;padding-bottom: 10px;">  <div style="font-family:Arial,Helvetica;color:#FFFFFF;text-align:center;">   <p style="font-family: Arial,Helvetica;margin:0;font-weight:200;font-size:16px;line-height:19px;text-align:center;">Your one hour timeslot can't be changed but you do have other options to choose from</p>  </div></div><!-- NOTIFY.HTML.STYLE DEFAULT.TEXT End-->
+
+<!--- NOTIFY.HTML.STYLE BUTTON.TEXT start --><div align="center" class="button-container center" style="Margin-right: 10px;Margin-left: 10px;padding-bottom: 10px;"> <div style="line-height:10px;font-size:1px">&nbsp; </div> <a href="https://www.dpd.co.uk/d/2mKSEM1Q5idS" target="_blank" style="color: #FFFFFF; text-decoration: none;"> <!--[if mso]>  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://www.dpd.co.uk/d/2mKSEM1Q5idS" style="height:48px; v-text-anchor:middle; width:215px;" arcsize="0%" strokecolor="#424143" fillcolor="#424143" >  <w:anchorlock/><center style="color:#FFFFFF; font-family:Arial,Helvetica; font-size:15px;"> <![endif]--> <!--[if !mso]><!-->
+<div style="color: #FFFFFF; background-color: #424143; border-radius: 0px; -webkit-border-radius: 0px; -moz-border-radius: 0px; max-width: 200px; width: auto; border-top: 0px solid transparent; border-right: 0px solid transparent; border-bottom: 0px solid transparent; border-left: 0px solid transparent; padding-top: 0px; padding-right: 15px; padding-bottom: 0px; padding-left: 15px; font-family: Arial,Helvetica; text-align: center;"><!--[endif]-->  <span style="font-family: Arial,Helvetica;font-size: 22px; line-height: 35px;font-weight:400;" data-mce-style="font-size: 22px; line-height: 48px;"> Show me </span>  <!--[if !mso]><!--></div><!--<![endif]-->  <!--[if mso]>   </center>   </v:roundrect>  <![endif]--> </a> <div style="line-height:10px;font-size:1px">&nbsp; </div></div><!--- NOTIFY.HTML.STYLE BUTTON.TEXT end -->
+<!-- NOTIFY.HTML.STYLE NUMBER.TEXT start --><div style="Margin-right: 10px; Margin-left: 10px;padding-bottom: 10px;">  <div style="font-family:Arial,Helvetica;color:#FFFFFF;text-align:center;">      <p style="font-family:Arial,Helvetica;color:#FFFFFF;margin: 0;font-size: 14px;line-height: 19px;text-align: center; font-weight: 200;letter-spacing: 1px;">Your parcel: ‍05025037546580</p>  </div></div><!-- NOTIFY.HTML.STYLE NUMBER.TEXT end -->
+<div>&nbsp;</div>
+</div>
+<div>
+<div>&nbsp;</div>
+<!-- NOTIFY.HTML.STYLE SMALL.TEXT Start--><div style="Margin-right: 10px; Margin-left: 10px;padding-bottom: 10px;">  <div style="font-family:Arial,Helvetica;color:#FFFFFF;text-align:center;">   <p style="font-family:Arial,Helvetica;margin:0;font-weight:200;font-size:14px;line-height:16px;text-align:center;">We're thinking differently about delivery, which is why your parcel is being brought to you by one of our all-electric fleet.</p>  </div></div><!-- NOTIFY.HTML.STYLE SMALL.TEXT End-->
+</div></p>
+                        </div>
+                    </div>
+                    <!-- HEADING End -->
+                    <!-- TEXT Start -->
+                    <div style="Margin-right: 10px; Margin-left: 10px;">
+                        <div style="line-height: 10px; font-size: 1px">&nbsp;</div>
+                        <div style="font-family:Arial,Helvetica;color:#FFFFFF;text-align: left;">
+                            <p style="font-family:Arial,Helvetica;margin: 0;"></p>
+                        </div>
+                    </div>
+                    <!-- TEXT End -->
+                    <!--[if !mso]><!--></div>
+            </div><!--<![endif]-->
+            <!--[if (mso)|(IE)]></td><td class="corner__x">&nbsp;</td></tr></table></td></tr></table><![endif]-->
+            <!--[if !mso]><!--></div><!--<![endif]-->
+        </div>
+    </div>
+
+    <!-- Footer Banner - START -->
+    <!-- NOTIFY.BANNER.HTML 1*APP.DOWNLOAD start --> <div style="background-color:transparent;">   <div rel="col-num-container-box" style="Margin: 0 auto;min-width: 320px;max-width: 500px;width: 320px;width: calc(19000% - 98300px);overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;width:100%;" class="block-grid ">     <div style="border-collapse: collapse;display: table;width: 100%;"><!-- BorderStyleHere -->       <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td  style="background-color:transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width: 500px;"><tr class="layout-full-width" style="background-color:transparent;"><td class="corner__x">&nbsp;</td><![endif]-->        <!--[if (mso)|(IE)]>
+<td align="center"  width="500" style=" width:500px; border-top: 2px solid #FFFFFF; border-left: 0px solid transparent;  border-bottom: 0px solid transparent; border-right: 0px solid transparent;" valign="top"><![endif]-->       <!--[if !mso]><!--><div rel="col-num-container-box" class="col num12" style="min-width: 320px;max-width: 500px;width: auto;background-color: transparent;">       <div style="background-color: transparent; border-top: 2px solid #FFFFFF; border-left: 0px solid transparent; border-bottom: 0px solid transparent; border-right: 0px solid transparent;"><!--<![endif]-->   <!-- Banner Wrapper Inner - START -->           <table style="background:#ECECEC;float:left;" cellpadding="0px" cellspacing="0px" align="center">             <tbody>               <tr>                 <td>                   <div style="max-width:500px;min-width:320px;display:block;">                     <table width="100%" cellpadding="0px" cellspacing="0px">
+<tbody>                         <tr>                           <td width="60%" style="padding:15px 15px 25px 15px;">                             <p>                               <span style="text-align:left;line-height:130%;font-size:16px; font-family:arial, sans-serif; font-weight:bold;">Download our app</span><br>                               <span style="text-align:left;line-height:130%;font-size:13px; font-family:arial, sans-serif; ">Never miss a parcel delivery from your favourite <strong>DPDgroup</strong> companies, <strong>DPD Local</strong> and <strong>DPD</strong>.</span><br><br>                             </p>                             <p>                               <a href="https://www.dpd.co.uk/lp/yourdpd/index.html" target="_blank" style="background:#e3002a; padding:10px; margin-top:10px; text-align:center;line-height:130%;font-size:13px; font-family:arial, sans-serif; font-weight:bold; text-decoration:none; color:#fff;">Find out more</a>
+             </p>                           </td>                           <td align="right" style="padding:15px 10px 0px 0px;"><img src="https://www.dpd.co.uk/images/email/dpd-app-mobile.jpg" border="0" width="116" style="vertical-align:bottom;  display:table-cell; "></td>                         </tr>                       </tbody>                     </table>                   </div>                 </td>               </tr>             </tbody>           </table> <!-- Banner Wrapper Inner - END -->            <!--[if !mso]><!--></div>       </div><!--<![endif]-->       <!--[if (mso)|(IE)]></td><td class="corner__x">&nbsp;</td></tr></table></td></tr></table><![endif]-->     </div>   </div> </div> <!-- NOTIFY.BANNER.HTML 1*APP.DOWNLOAD end -->
+    <!-- Footer Banner - END -->
+
+</div>
+
+<!-- DPD UK - Google Analytics -->
+<img src="https://www.google-analytics.com/collect?v=1&amp;tid=UA-360430-13&amp;t=event&amp;ec=notification_email&amp;ea=open">
+
+</body></html>
+----==_mimepart_58d15b77e8fdd_43fc8121b89f07094cf
+Content-Disposition: attachment; filename="DPD Delivery.ICS"
+Content-Type: text/calendar; name="DPD Delivery.ICS"
+Content-Transfer-Encoding: base64
+
+QkVHSU46VkNBTEVOREFSDVZFUlNJT046Mi4wDVBST0RJRDotLy9EUERncm91cFVLLy8vTk9OU0dN
+TCB2MS4wLy9FTg1CRUdJTjpWRVZFTlQNVUlEOjIwMTkxMTI0VDA5MzUwMy15b3VyZGVsaXZlcnlA
+ZHBkLmNvLnVrDURUU1RBTVA6MjAxOTExMjRUMDkzNTAzDURUU1RBUlQ6MjAxOTExMjRUMTAyODAw
+DURURU5EOjIwMTkxMTI0VDExMjgwMA1MT0NBVElPTjozMCBHUk9PTSBQTEFDRSwgTE9ORE9OLCBT
+VzFYN0JBDVNVTU1BUlk6RFBEIERlbGl2ZXJ5DU9SR0FOSVpFUjtDTj1EUEQ6TUFJTFRPOnlvdXJk
+ZWxpdmVyeUBkcGQuY28udWsNREVTQ1JJUFRJT046QlJVICBvcmRlcg1VUkw6aHR0cHM6Ly93d3cu
+ZHBkLmNvLnVrL2QvMm1LU0VNMVE1aWRTDUVORDpWRVZFTlQNRU5EOlZDQUxFTkRBUg==
+
+----==_mimepart_58d15b77e8fdd_43fc8121b89f07094cf--
