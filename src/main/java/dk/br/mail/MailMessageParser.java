@@ -223,7 +223,15 @@ public class MailMessageParser
         else if ("attachment".equals(propertyName))
         {
           String src = propertyNode.getAttribute("src");
-          msg.attach(MailPartData.from(src, null));
+          if (StringUtils.isNotEmpty(src)) {
+            msg.attach(MailPartData.from(src, null));
+          }
+          else {
+            String type = propertyNode.getAttribute("type");
+            String name = propertyNode.getAttribute("name");
+            byte content[] = Base64.decodeBase64(_text(propertyNode));
+            msg.attach(type, name, content);
+          }
         }
         else if ("message-id".equals(propertyName))
         {
