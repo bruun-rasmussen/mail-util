@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -76,12 +77,13 @@ public class MailMessageMarshaller
     Element addrs = _addElement(m, "addresses");
     for (Address a : _NVL(msg.getFrom()))
       _addAddress(addrs, "from", (InternetAddress)a);
+    if (!Arrays.equals(msg.getFrom(), msg.getReplyTo()))
+      for (Address a : _NVL(msg.getReplyTo()))
+        _addAddress(addrs, "reply-to", (InternetAddress)a);
     for (Address a : _NVL(msg.getRecipients(Message.RecipientType.TO)))
       _addAddress(addrs, "to", (InternetAddress)a);
     for (Address a : _NVL(msg.getRecipients(Message.RecipientType.CC)))
       _addAddress(addrs, "cc", (InternetAddress)a);
-    for (Address a : _NVL(msg.getReplyTo()))
-      _addAddress(addrs, "reply-to", (InternetAddress)a);
 
     try
     {
