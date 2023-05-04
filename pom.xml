@@ -53,9 +53,23 @@
     </dependency>
 
     <dependency>
+      <groupId>javax.cache</groupId>
+      <artifactId>cache-api</artifactId>
+      <version>1.1.1</version>
+    </dependency>
+
+    <dependency>
       <groupId>net.sf.cssbox</groupId>
       <artifactId>jstyleparser</artifactId>
       <version>4.0.0</version>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.jsr107.ri</groupId>
+      <artifactId>cache-ri-impl</artifactId>
+      <version>1.1.1</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>

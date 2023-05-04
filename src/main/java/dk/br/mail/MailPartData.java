@@ -19,6 +19,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.cache.Caching;
+import javax.cache.configuration.MutableConfiguration;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
+import javax.cache.spi.CachingProvider;
 import javax.mail.MessagingException;
 import javax.net.ssl.SSLException;
 import org.apache.commons.codec.binary.Base64;
@@ -46,15 +53,6 @@ public abstract class MailPartData implements MailPartSource, Serializable
    */
   private static MailPartData remote(URL url) {
     return new RemoteHtmlResource(url);
-  }
-
-  /**
-   * Fetch the target resource and return the content as a mail part source to be
-   * embedded during mail composition.
-   * @throws  IOException    if the content cannot be fetched
-   */
-  private static MailPartData local(URL url) throws IOException {
-    return _read(url);
   }
 
   public static MailPartSource wrap(final DataSource src) {
@@ -105,11 +103,11 @@ public abstract class MailPartData implements MailPartSource, Serializable
       URL url = MailPartData.class.getClassLoader().getResource(name);
       if (url == null)
         throw new IOException(name + ": not found");
-      return local(url);
+      return _fetch(url);
     }
     else if (href.startsWith("file:") || href.startsWith("jar:"))
     {
-      return local(new URL(href));
+      return _fetch(new URL(href));
     }
     else if (href.startsWith("http:") || href.startsWith("https:"))
     {
@@ -194,7 +192,48 @@ public abstract class MailPartData implements MailPartSource, Serializable
     }
   }
 
+  private static CacheManager CM;
+
+  private static Cache<URL,BinaryData> _binaryDataCache() {
+    if (CM == null) {
+      CachingProvider cp = Caching.getCachingProvider();
+      CM = cp.getCacheManager();
+    }
+
+    Cache<URL, BinaryData> cache = CM.getCache("binaryData", URL.class, BinaryData.class);
+    if (cache == null) {
+      MutableConfiguration<URL,BinaryData> config =
+        new MutableConfiguration()
+            .setTypes(URL.class, BinaryData.class)
+            .setStoreByValue(false)
+            .setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(Duration.FIVE_MINUTES));
+
+      cache = CM.createCache("binaryData", config);
+    }
+    return cache;
+  }
+
+  /**
+   * Fetch remote resource and cache if for reuse
+   */
   private static BinaryData _read(URL url)
+      throws IOException
+  {
+    Cache<URL, BinaryData> cache = _binaryDataCache();
+    BinaryData res = cache.get(url);
+    if (res == null) {
+      res = _fetch(url);
+      cache.put(url, res);
+    }
+    return res;
+  }
+
+  /**
+   * Fetch the target resource and return the content as a mail part source to be
+   * embedded during mail composition.
+   * @throws  IOException    if the content cannot be fetched
+   */
+  private static BinaryData _fetch(URL url)
       throws IOException
   {
     long t1 = System.currentTimeMillis();
@@ -204,6 +243,19 @@ public abstract class MailPartData implements MailPartSource, Serializable
     String contentType = conn.getContentType();
     String contentEncoding = conn.getContentEncoding();
 
+    String name = _fileNameOf(url);
+
+    try (InputStream is = conn.getInputStream())
+    {
+      byte content[] = _readStream(is);
+      long t2 = System.currentTimeMillis();
+      LOG.debug("{}: fetched {} bytes of {} ({}ms)", name, content.length, (contentEncoding == null ? "" : "[" + contentEncoding + "]-encoded ") + contentType, t2-t1);
+      return new BinaryData(contentType, name, content);
+    }
+  }
+
+  private static String _fileNameOf(URL url)
+  {
     String name = url.getFile();
 
     // Strip ..my-file.pdf?p1=query&p2=etc... query suffix
@@ -216,18 +268,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
     if (spos >= 0)
       name = name.substring(spos + 1);
 
-    InputStream is = conn.getInputStream();
-    try
-    {
-      byte content[] = _readStream(is);
-      long t2 = System.currentTimeMillis();
-      LOG.debug("{}: fetched {} bytes of {} ({}ms)", name, content.length, (contentEncoding == null ? "" : "[" + contentEncoding + "]-encoded ") + contentType, t2-t1);
-      return new BinaryData(contentType, name, content);
-    }
-    finally
-    {
-      is.close();
-    }
+    return name;
   }
 
   private static byte[] _readStream(InputStream in)
