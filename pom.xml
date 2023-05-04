@@ -64,6 +64,14 @@
       <version>4.0.0</version>
     </dependency>
 
+    <!-- For production, add a proper JSR-107 implementation, e.g.:
+    <dependency>
+      <groupId>org.ehcache</groupId>
+      <artifactId>ehcache</artifactId>
+      <version>3.9.11</version>
+      <scope>runtime</scope>
+    </dependency>
+     -->
 
     <dependency>
       <groupId>org.jsr107.ri</groupId>
