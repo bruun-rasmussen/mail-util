@@ -249,7 +249,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
     {
       byte content[] = _readStream(is);
       long t2 = System.currentTimeMillis();
-      LOG.debug("{}: fetched {} bytes of {} ({}ms)", name, content.length, (contentEncoding == null ? "" : "[" + contentEncoding + "]-encoded ") + contentType, t2-t1);
+      LOG.info("{}: fetched {} bytes of {} ({}ms)", url, content.length, (contentEncoding == null ? "" : "[" + contentEncoding + "]-encoded ") + contentType, t2-t1);
       return new BinaryData(contentType, name, content);
     }
   }
