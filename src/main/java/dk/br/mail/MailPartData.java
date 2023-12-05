@@ -197,15 +197,23 @@ public abstract class MailPartData implements MailPartSource, Serializable
   private static Cache<URL,BinaryData> _binaryDataCache() {
     if (CM == null) {
       CachingProvider cp = Caching.getCachingProvider();
-      CM = cp.getCacheManager();
+      LOG.info("Caching provider {}", cp.getClass());
+
+      ClassLoader classLoader = MailPartData.class.getClassLoader();
+      URL cfg = classLoader.getResource("cache-config.xml");
+      URI cacheConfig = cfg == null ? null : URI.create(cfg.toString());
+      CM = cp.getCacheManager(cacheConfig, classLoader);
     }
 
     Cache<URL, BinaryData> cache = CM.getCache("binaryData", URL.class, BinaryData.class);
     if (cache == null) {
+      // See https://www.ehcache.org/documentation/3.9/107.html
       MutableConfiguration<URL,BinaryData> config =
         new MutableConfiguration()
             .setTypes(URL.class, BinaryData.class)
-            .setStoreByValue(false)
+            .setStoreByValue(true)
+            .setStatisticsEnabled(false)
+            .setManagementEnabled(false)
             .setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(Duration.FIVE_MINUTES));
 
       cache = CM.createCache("binaryData", config);
