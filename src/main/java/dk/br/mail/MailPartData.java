@@ -222,11 +222,14 @@ public abstract class MailPartData implements MailPartSource, Serializable
   }
 
   /**
-   * Fetch remote resource and cache if for reuse
+   * Fetch remote resource and cache it for reuse
    */
   private static BinaryData _read(URL url)
       throws IOException
   {
+    if (isLocal(url.toString()))
+      return _fetch(url);
+
     Cache<URL, BinaryData> cache = _binaryDataCache();
     BinaryData res = cache.get(url);
     if (res == null) {
@@ -234,6 +237,22 @@ public abstract class MailPartData implements MailPartSource, Serializable
       cache.put(url, res);
     }
     return res;
+  }
+
+  private static final Pattern URL_PATTERN = Pattern.compile("(?<proto>[^:]):(?<tail>.*)");
+
+  private static boolean isLocal(String url) {
+    Matcher m = URL_PATTERN.matcher(url);
+    if (!m.matches())
+      return false;
+
+    String proto = m.group("proto");
+    if ("file".equals(proto) || "mem".equals(proto))
+      return true;
+    else if ("jar".equals(proto))
+      return isLocal(m.group("tail"));
+    else
+      return false;
   }
 
   /**
