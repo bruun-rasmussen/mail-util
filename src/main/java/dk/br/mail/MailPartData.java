@@ -1,7 +1,6 @@
 package dk.br.mail;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,6 +28,7 @@ import javax.cache.spi.CachingProvider;
 import javax.mail.MessagingException;
 import javax.net.ssl.SSLException;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -272,13 +272,10 @@ public abstract class MailPartData implements MailPartSource, Serializable
 
     String name = _fileNameOf(url);
 
-    try (InputStream is = conn.getInputStream())
-    {
-      byte content[] = _readStream(is);
-      long t2 = System.currentTimeMillis();
-      LOG.info("{}: fetched {} bytes of {} ({}ms)", url, content.length, (contentEncoding == null ? "" : "[" + contentEncoding + "]-encoded ") + contentType, t2-t1);
-      return new BinaryData(contentType, name, content);
-    }
+    byte content[] = IOUtils.toByteArray(conn);
+    long t2 = System.currentTimeMillis();
+    LOG.info("{}: fetched {} bytes of {} ({}ms)", url, content.length, (contentEncoding == null ? "" : "[" + contentEncoding + "]-encoded ") + contentType, t2-t1);
+    return new BinaryData(contentType, name, content);
   }
 
   private static String _fileNameOf(URL url)
@@ -296,17 +293,6 @@ public abstract class MailPartData implements MailPartSource, Serializable
       name = name.substring(spos + 1);
 
     return name;
-  }
-
-  private static byte[] _readStream(InputStream in)
-    throws IOException
-  {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    byte buf[] = new byte[8192];
-    int n;
-    while ((n = in.read(buf)) > 0)
-      out.write(buf, 0, n);
-    return out.toByteArray();
   }
 
   /*
