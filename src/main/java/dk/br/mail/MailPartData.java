@@ -156,7 +156,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
 
       // https://stackoverflow.com/a/26046079/442782
       HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-      conn.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Thunderbird/45.8.0");
+      conn.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Thunderbird/128.1.0");
       conn.setConnectTimeout(15000);
       conn.setReadTimeout(15000);
       conn.setInstanceFollowRedirects(false);
@@ -230,7 +230,7 @@ public abstract class MailPartData implements MailPartSource, Serializable
     if (isLocal(url.toString()))
       return _fetch(url);
 
-    Cache<URL, BinaryData> cache = _binaryDataCache();
+    Cache<URL,BinaryData> cache = _binaryDataCache();
     BinaryData res = cache.get(url);
     if (res == null) {
       res = _fetch(url);
