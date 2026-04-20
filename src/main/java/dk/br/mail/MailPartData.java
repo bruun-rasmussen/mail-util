@@ -192,33 +192,39 @@ public abstract class MailPartData implements MailPartSource, Serializable
     }
   }
 
-  private static CacheManager CM;
-
-  private static Cache<URL,BinaryData> _binaryDataCache() {
-    if (CM == null) {
+  private static final class CacheHolder {
+    static final CacheManager INSTANCE;
+    static {
       CachingProvider cp = Caching.getCachingProvider();
       LOG.info("Caching provider {}", cp.getClass());
-
-      ClassLoader classLoader = MailPartData.class.getClassLoader();
-      URL cfg = classLoader.getResource("cache-config.xml");
+      ClassLoader cl = MailPartData.class.getClassLoader();
+      URL cfg = cl.getResource("cache-config.xml");
       URI cacheConfig = cfg == null ? null : URI.create(cfg.toString());
-      CM = cp.getCacheManager(cacheConfig, classLoader);
+      INSTANCE = cp.getCacheManager(cacheConfig, cl);
     }
+  }
 
-    Cache<URL, BinaryData> cache = CM.getCache("binaryData", URL.class, BinaryData.class);
-    if (cache == null) {
-      // See https://www.ehcache.org/documentation/3.9/107.html
-      MutableConfiguration<URL,BinaryData> config =
-        new MutableConfiguration()
-            .setTypes(URL.class, BinaryData.class)
-            .setStoreByValue(true)
-            .setStatisticsEnabled(false)
-            .setManagementEnabled(false)
-            .setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(Duration.FIVE_MINUTES));
+  private static Cache<URL,BinaryData> _binaryDataCache() {
+    CacheManager cm = CacheHolder.INSTANCE;
+    Cache<URL,BinaryData> cache = cm.getCache("binaryData", URL.class, BinaryData.class);
+    if (cache != null)
+      return cache;
 
-      cache = CM.createCache("binaryData", config);
+    synchronized (MailPartData.class) {
+      cache = cm.getCache("binaryData", URL.class, BinaryData.class);
+      if (cache == null) {
+        // See https://www.ehcache.org/documentation/3.9/107.html
+        MutableConfiguration<URL,BinaryData> config =
+          new MutableConfiguration<URL,BinaryData>()
+              .setTypes(URL.class, BinaryData.class)
+              .setStoreByValue(true)
+              .setStatisticsEnabled(false)
+              .setManagementEnabled(false)
+              .setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(Duration.FIVE_MINUTES));
+        cache = cm.createCache("binaryData", config);
+      }
+      return cache;
     }
-    return cache;
   }
 
   /**
