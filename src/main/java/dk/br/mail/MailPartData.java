@@ -192,26 +192,21 @@ public abstract class MailPartData implements MailPartSource, Serializable
     }
   }
 
+  /**
+   * Holds the one cache reference for the JVM's lifetime: ehcache 3.9's
+   * Eh107CacheManager.getCache() wraps the cache anew on every call, leaking
+   * three latency monitors per lookup into the underlying cache's statistics.
+   */
   private static final class CacheHolder {
-    static final CacheManager INSTANCE;
+    static final Cache<URL,BinaryData> INSTANCE;
     static {
       CachingProvider cp = Caching.getCachingProvider();
       LOG.info("Caching provider {}", cp.getClass());
       ClassLoader cl = MailPartData.class.getClassLoader();
       URL cfg = cl.getResource("cache-config.xml");
       URI cacheConfig = cfg == null ? null : URI.create(cfg.toString());
-      INSTANCE = cp.getCacheManager(cacheConfig, cl);
-    }
-  }
-
-  private static Cache<URL,BinaryData> _binaryDataCache() {
-    CacheManager cm = CacheHolder.INSTANCE;
-    Cache<URL,BinaryData> cache = cm.getCache("binaryData", URL.class, BinaryData.class);
-    if (cache != null)
-      return cache;
-
-    synchronized (MailPartData.class) {
-      cache = cm.getCache("binaryData", URL.class, BinaryData.class);
+      CacheManager cm = cp.getCacheManager(cacheConfig, cl);
+      Cache<URL,BinaryData> cache = cm.getCache("binaryData", URL.class, BinaryData.class);
       if (cache == null) {
         // See https://www.ehcache.org/documentation/3.9/107.html
         MutableConfiguration<URL,BinaryData> config =
@@ -223,8 +218,12 @@ public abstract class MailPartData implements MailPartSource, Serializable
               .setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(Duration.FIVE_MINUTES));
         cache = cm.createCache("binaryData", config);
       }
-      return cache;
+      INSTANCE = cache;
     }
+  }
+
+  private static Cache<URL,BinaryData> _binaryDataCache() {
+    return CacheHolder.INSTANCE;
   }
 
   /**
